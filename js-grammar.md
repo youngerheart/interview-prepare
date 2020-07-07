@@ -110,8 +110,11 @@ function run(fn) {
 
   function next(err, data) {
     // data即文件读取的值(第一次无效)
+    if (err) throw err;
     var result = gen.next(data); // 改变了上一个yield的返回值
     if (result.done) return;
+    // generator函数的yield返回的异步函数的情况下这样使用
+    // value === callback
     result.value(next); // 这里才正式开始求值
   }
 
