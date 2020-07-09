@@ -28,6 +28,15 @@
 - [vertical-align (垂直-对其)](#vertical-align-垂直-对其)
 - [display 与 position](#display-与-position)
   - [display](#display)
+  - [position](#position)
+- [CSS3新特性](#css3新特性)
+  - [新选择器](#新选择器)
+  - [@font-face](#font-face)
+  - [各种效果](#各种效果)
+- [BFC的概念](#bfc的概念)
+- [CSS Sprites](#css-sprites)
+- [对语义化的理解？](#对语义化的理解)
+- [清除浮动](#清除浮动)
 
 <!-- /TOC -->
 
@@ -217,3 +226,64 @@
 * `flex` 将内部设置为弹性布局
 * `grid` 将内部设置为网格布局
 * `none` 完全不显示该内容，由下一个元素替换位置
+
+### position
+* `static` 默认，元素在正常文档流中，忽略定位声明。
+* `absolute`/`fixed`/`relative`/`inherit`
+
+## CSS3新特性
+### 新选择器
+* `first-child`/`last-child`/`nth-child(n)`/`nth-last-child(n)`
+
+### @font-face
+指定与加载远端字体样式
+```
+@font-face {
+  font-family: myFirstFont;
+  src: url('Sansation_Light.ttf'),
+    url('Sansation_Light.eot'); /* IE9 */
+}
+```
+
+### 各种效果
+* 圆角: border-radius
+* 阴影: text-shadow: h-shadow v-shadow blur color horizontal/vertical
+* 背景图渐变: background-image: linear-gradient(red, yellow, blue);
+* 过渡: transition: property duration timing-function delay;
+* 变换: transform: translate(水平移动)、rotate(旋转)、scale(伸缩)、skew(倾斜)
+* 动画:
+```css
+animation: ani 2s ease 0s;
+@keyframes ani {
+    0%{
+        left: 10px;
+        opacity: 1;
+    }
+    50%,70%{
+        left: 50%;
+        opacity: .7;
+        margin-left:-150px;
+    }
+    100%{
+        left: 100%;
+        opacity: 0;
+        margin-left:-300px;
+    }
+}
+```
+## BFC的概念
+Block Formatting Context 是布局过程中生成块级盒子的区域。
+BFC是一个独立的布局环境，BFC中的元素布局不受外部影响。浮动元素会创建BFC，所以两个浮动元素的布局互相不影响。
+
+## CSS Sprites
+将一些背景图片整合到一张图片文件中，再利用CSS的`background-image/repeat/position`进行定位，减少图片文件开销。
+
+## 对语义化的理解？
+* 通过html标签的合理使用与合理布局，使得无样式时页面也有清晰的结构
+* 充分应用a标签的title与img标签的alt等属性，方便盲人阅读器/屏幕阅读器的解析
+* 有利于SEO，提高易读性，方便代码维护。
+
+## 清除浮动
+`float` 的浮动元素仍然占据父元素中空间，没有脱离当前文档流。该元素会变为`inline-block`的模式。
+* 使用空标签/:after `clear:both` 清除浮动
+* 给父元素设置overflow: auto/hidden
