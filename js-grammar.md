@@ -12,6 +12,10 @@
   - [null表示没有该对象](#null表示没有该对象)
   - [undefined表示缺少值](#undefined表示缺少值)
 - [new操作符具体做了什么](#new操作符具体做了什么)
+- [Map/Set对象用法](#mapset对象用法)
+  - [Map](#map)
+  - [map.keys()](#mapkeys)
+  - [Set](#set)
 
 <!-- /TOC -->
 
@@ -225,3 +229,27 @@ function 的「创建」「初始化」和「赋值」都被提升了。
 * 执行构造函数中的代码（会覆盖原型链中的同名属性）
 `Func.call(obj)`
 * 返回该对象
+
+## Map/Set对象用法
+### Map
+Map是一中键值对的结构，类似于:
+`[[key1, value1], [key2, value2], [key3, value3]]`
+初始化Map可以传入上述的二维数组，或直接初始化空Map。
+实例化map有以下方法
+```js
+map.set(key, value)
+map.has(key) // true/false
+map.get(key) // value
+```
+由于一个key只能对应一个value，当多次对一个key`set`value时新值覆盖老值。
+
+### map.keys()
+返回了一个iterator，可以用`keys.next().value`来获取到第一个值，或者转为数组:
+* Array.from(keys); // 将类数组(这里是有Iterator接口的对象)转为数组(Array.prototype.slice.call不可用！
+* [...keys];
+
+### Set
+是一组key的集合，但不储存value。在一个set中key不能重复
+* 有`add`和`delete`方法
+* 可以用for...of遍历
+* 可以用解构赋值为数组来给数组去重: [...new Set(array)]
