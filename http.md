@@ -7,13 +7,22 @@
   - [Cookie/iframe](#cookieiframe)
   - [iframe](#iframe)
   - [window.postMessage](#windowpostmessage)
-  - [LocalStorage](#localstorage)
   - [AJAX](#ajax)
 - [CORS](#cors)
   - [两种请求](#两种请求)
   - [简单请求](#简单请求)
   - [非简单请求](#非简单请求)
   - [CORS与JSONP](#cors与jsonp)
+- [XSS与CSRF](#xss与csrf)
+  - [XSS](#xss)
+  - [CSRF](#csrf)
+- [OAuth2与JWT](#oauth2与jwt)
+  - [授权码授权](#授权码授权)
+  - [隐藏式授权](#隐藏式授权)
+  - [密码式授权](#密码式授权)
+  - [凭证式授权](#凭证式授权)
+  - [JWT的结构](#jwt的结构)
+- [中间人攻击](#中间人攻击)
 
 <!-- /TOC -->
 
@@ -72,7 +81,6 @@ window.parent.document.body // 在子窗口
 
 
 ### window.postMessage
-### LocalStorage
 在浏览器js的[实现多个标签页的通信](./js-browser.md#实现多个标签页的通信)章节。
 
 ### AJAX
@@ -138,3 +146,156 @@ xhr.widhCredentials = true;
 
 ### CORS与JSONP
 JSONP只支持GET请求，CORS支持所有类型。JSONP对于老浏览器支持好，可以向不支持CORS的网站请求数据。
+
+## XSS与CSRF
+### XSS
+XSS(Cross Site Scripting)跨站脚本攻击
+攻击原理：不需要登录验证，通过表单等输入项界面注入脚本。
+可能的结果: 盗用Cookie/破坏页面解构/植入恶意广告。
+攻击方式:
+* 反射型: XSS代码出现在url中，服务器解析后返回，浏览器执行恶意代码。
+* 储存型: 提交的代码储存在服务器端，下次请求无需提交XSS代码。
+**防范措施**
+1. 编码: 对用户输入的数据进行HTML Entity编码
+*innerText会将所有文本转义*
+```js
+let dom = document.createElement('div');
+let strToEntity = (str) => {
+  dom.innerText = dom;
+  return dom.innerHTML;
+}
+```
+2. 过滤: 对用户输入的富文本，过滤掉style/script/iframe标签
+3. 校正: 不要直接对Entity字符串进行解码，先使用真实dom转换一遍，校正不配对的标签，再做一遍标签过滤。
+
+### CSRF
+CSRF(Cross-site request forgery) 跨站请求伪造
+攻击者借助受害者的Cookie以受害者的名义伪造请求发送给受攻击服务器，执行操作。
+例子:
+一个BBS站点
+http://www.c.com
+当用户登录之后，会设置如下 cookie：
+res.setHeader('Set-Cookie', ['user=2333; expires=Sat, 21 Jul 2020 00:00:00 GMT;'])当登录后的用户发起如下 GET 请求时，会删除 ID 指定的帖子：
+http://www.c.com:8002/content/delete/:id
+攻击者准备页面:
+```html
+<img src="http://www.c.com:8002/content/delete/87343">
+```
+则当用户访问攻击者的网站时，会向www.c.com发起一个删除帖子请求，若用户再到www.c.com刷新，会发现该帖子已经被删除。
+
+**防范措施**
+* 验证码：强制用户与应用进行交互，但并不能所有操作都加上验证码。
+* Referer验证：验证请求源是否合法。
+* token验证：在请求中以参数/http头字段的形式添加一个随机token（由后端经过验证而产生）如果某个请求不包含该token或不正确则拒绝请求。token需要被保存/有有效期/刷新机制等
+
+## OAuth2与JWT
+OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。OAuth 2.0 的标准是 RFC 6749。
+### 授权码授权
+第三方应用先申请一个授权码，再用该码从后端申请令牌，所有与资源服务器的通信都在后端完成，避免令牌泄漏。
+1. A网站提供链接跳转到B网站:
+```
+https://b.com/oauth/authorize?
+  response_type=code& // 要求返回授权码
+  client_id=CLIENT_ID& // CLIENT_ID在请求
+  redirect_uri=CALLBACK_URL& // 结果得出后跳转页面
+  scope=read // 授权范围
+```
+2. B站要求登录后跳转回A:
+```
+https://a.com/callback?code=AUTHORIZATION_CODE
+```
+`AUTHORIZATION_CODE`即授权码
+3. A在拿到授权码后可以在后端向B请求令牌
+```
+https://b.com/oauth/token?
+ client_id=CLIENT_ID& // 确认身份
+ client_secret=CLIENT_SECRET& // 后端保密参数，验证身份
+ grant_type=authorization_code& // 授权方式
+ code=AUTHORIZATION_CODE& // 上一步的授权码
+ redirect_uri=CALLBACK_URL // 回调地址
+```
+4. B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
+```
+{    
+  "access_token":"ACCESS_TOKEN",
+  "token_type":"bearer",
+  "expires_in":2592000,
+  "refresh_token":"REFRESH_TOKEN",
+  "scope":"read",
+  "uid":100101,
+  "info":{...}
+}
+```
+### 隐藏式授权
+对于纯前端应用，必须将令牌储存在前端。
+1. A跳转到B站授权
+```
+https://b.com/oauth/authorize?
+  response_type=token& // 要求直接返回令牌
+  client_id=CLIENT_ID&
+  redirect_uri=CALLBACK_URL&
+  scope=read
+```
+2. 授权后B会跳回redirect_uri指定的网址，把令牌作为hash参数（浏览器跳转时hash不会发送到服务器，减少”中间人攻击“泄漏令牌风险）
+```
+https://a.com/callback#token=ACCESS_TOKEN
+```
+该方式很不安全，令牌时间必须非常短（如一个session期间有效）
+
+### 密码式授权
+使用用户名和密码申请令牌
+1. A网站要求用户提供B网站的用户名和密码，之后向B请求令牌
+```js
+https://oauth.b.com/token?
+  grant_type=password& // 请求使用密码式授权
+  username=USERNAME&
+  password=PASSWORD&
+  client_id=CLIENT_ID
+```
+2. B网站验证身份通过后，直接给出令牌。这时不需要跳转，直接通过HTTP响应返回JSON数据。
+
+该方式风险很大，只适用于其他授权方式无法采用的情况，必须是用户高度信任的应用。
+
+### 凭证式授权
+适用于没有前端的命令行应用。
+1. A应用在命令行向B发出请求
+```js
+https://oauth.b.com/token?
+  grant_type=client_credentials& // 请求使用凭证式授权
+  client_id=CLIENT_ID&
+  client_secret=CLIENT_SECRET
+```
+
+2. B验证通过后，直接返回令牌。
+
+这种令牌是针对第三方应用而不是某个用户的，可能多用户共享。
+
+JWT(JSON Web Token) 是一个开放标准(RFC 7519)，通过数字签名将JSON对象加密，安全传输信息。
+### JWT的结构
+*Header.PayLoad.Signature*
+1. Header
+```js
+{
+  "alg": 'HS256', // 加密算法
+  "typ": 'JWT' // token类型
+}
+```
+2. PayLoad(claims)
+载荷(声明)
+```js
+{
+  "sub":"1234567890",
+  "name":"John Doe",
+  "admin":true,
+  "exp": '' // 失效时间
+}
+```
+3. Signature
+签名，使用一个私钥（private key）通过特定算法对Header和Claims进行混淆产生签名信息。
+私钥可以认真token的有效性，不要将私钥放在客户端。
+
+## 中间人攻击
+* 指攻击者与通讯的两端分别创建独立的联系，并交换其所收到的数据，使通讯的两端认为他们正在通过一个私密的连接与对方直接对话，但事实上整个会话都被攻击者完全控制。
+**防范**
+1. 客户端不要轻易相信证书：因为这些证书极有可能是中间人。
+2. App 可以提前预埋证书在本地：意思是我们本地提前有一些证书，这样其他证书就不能再起作用了。

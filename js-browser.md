@@ -15,6 +15,7 @@
   - [getEntries()](#getentries)
   - [mark()与measure()](#mark与measure)
   - [now()](#now)
+- [切换标签页时改变该页title](#切换标签页时改变该页title)
 
 <!-- /TOC -->
 
@@ -170,3 +171,10 @@ clearMarks(name)/clearMeasure(name)
 
 ### now()
 返回当前相对于performance.timing.navigationStart的时间。
+
+## 切换标签页时改变该页title
+```js
+document.addEventListener('visibilitychange', () => {
+    document.title = document.visibilityState == 'hidden' ? '我傻了' : '我回来了'
+})
+```
