@@ -16,6 +16,17 @@
   - [Map](#map)
   - [map.keys()](#mapkeys)
   - [Set](#set)
+- [什么操作会导致内存泄漏](#什么操作会导致内存泄漏)
+  - [意外的全局变量](#意外的全局变量)
+  - [console.log](#consolelog)
+  - [闭包](#闭包)
+  - [DOM泄漏](#dom泄漏)
+  - [timers](#timers)
+- [判断浏览器还是NodeJS环境？](#判断浏览器还是nodejs环境)
+- [NodeJS优缺点](#nodejs优缺点)
+- [垃圾回收机制](#垃圾回收机制)
+  - [WeakMap](#weakmap)
+- [NodeJS多核HTTP应用](#nodejs多核http应用)
 
 <!-- /TOC -->
 
@@ -253,3 +264,106 @@ map.get(key) // value
 * 有`add`和`delete`方法
 * 可以用for...of遍历
 * 可以用解构赋值为数组来给数组去重: [...new Set(array)]
+
+## 什么操作会导致内存泄漏
+应用程序分配某段内存后，由于设计错误，导致释放该内存之前就失去了对该内存的控制，导致内存浪费。
+### 意外的全局变量
+* js对为声明的变量会在全局最高对象上创建对它的引用，该变量缓存大量数据，则只会在页面刷新或被关闭时释放内存。
+* 直接调用一个全局函数，其this的指向也是全局对象。
+### console.log
+代码运行后需要在开发工具查看对象信息，所以console.log的对象也不能被垃圾回收。
+### 闭包
+```js
+function Sum() {
+  var i = 99;
+  function tool() {
+    return ++i
+  }
+  return tool;
+}
+
+var sum = Sum();
+test(); // 100
+```
+这里的tool函数无法被回收，因为被全局对象tool引用。想要释放内存可以设置tool = null。
+
+### DOM泄漏
+如果某个变量保存了对DOM的引用，该元素在页面上被删除后对它的引用依然在变量中，造成内存泄漏，需要将其设置为null
+
+### timers
+setIntervals与setTimeout在使用过后如果没有手动clear就会一直占用内存。
+
+## 判断浏览器还是NodeJS环境？
+查看Global对象为global还是windows。
+
+## NodeJS优缺点
+基本常识:
+* CPU运算远远快于I/O操作
+* Web服务是典型的并发连接场景
+* NodeJS有一个主线程与多个底层工作线程
+运行机制
+```
+* V8引擎解析JavaScript脚本
+* 解析后的代码，调用NodeAPI
+* libuv库负责NodeAPI的执行。将不同任务分配带不同的线程，形成EventLoop，以异步的方式将结果返回给V8引擎
+* V8再将结果返回给用户
+```
+**优势**
+相对于多线程占用资源切换成本高，单线程占用内存少，不需要切换线程CPU开销降低，编写简单上手容易，线程安全性高。
+**劣势**
+CPU运算密集型会造成阻塞，无法利用多核，单线程异常会使得程序停止。
+
+## 垃圾回收机制
+语言引擎有一张引用表，保存了所有资源的引用次数，如果次数为0，表示这个值不在用到，可以释放。
+```js
+const arr = [1,2,3,4] // arr是对数组的引用，引用次数为1，则持续占用内存
+// do something
+arr = null; // 解除了引用，引用次数为0，可以释放内存
+```
+**可以通过Chome开发者工具以及NodeJS的Process.memoryUsage来查看内存使用**
+
+### WeakMap
+用这种数据结构新建引用时不会被记入垃圾回收机制，消除了对该节点的引用，它占用的内存就会被释放，weakmap保存的键值对也会消失。
+```js
+// node env
+global.gc(); //手动触发垃圾回收
+process.memoryUsage(); // {heapUsed, heapTotal}
+let wm = new WeakMap();
+let b = {};
+wm.set(b, new Array(5*1024*1024));
+process.memoryUsage(); // heapUsed上涨
+wm.get(b) // [empty × xxxx]
+// 这时直接调用b是没有值的，还是原来的空对象
+wm.get(b) // undefined
+process.memoryUsage(); // 恢复正常
+```
+
+## NodeJS多核HTTP应用
+
+```js
+import express from 'express'
+import os from 'os'
+import cluster from 'cluster'
+const PORT = process.env.PORT || 5000
+const clusterWorkerSize = os.cpus().length
+if (clusterWorkerSize > 1) {
+  if (cluster.isMaster) {
+    for (let i=0; i < clusterWorkerSize; i++) {
+      cluster.fork()
+    }
+    cluster.on('exit', function(worker) {
+      console.log('Worker', worker.id, ' has exitted.')
+    })
+  } else {
+    const app = express()
+    app.listen(PORT, function () {
+      console.log(`Express server listening on port ${PORT} and worker ${process.pid}`)
+    })
+  }
+} else {
+  const app = express()
+  app.listen(PORT, function () {
+    console.log(`Express server listening on port ${PORT} with the single worker ${process.pid}`)
+  })
+}
+```

@@ -1,6 +1,12 @@
 <!-- TOC -->
 
+- [常用HTTP Code](#常用http-code)
+- [从输入URL到页面加载完成都发生了什么](#从输入url到页面加载完成都发生了什么)
+  - [缓存相关](#缓存相关)
+  - [网络相关](#网络相关)
+  - [浏览器相关](#浏览器相关)
 - [cookie的优缺点](#cookie的优缺点)
+  - [窃取Cookie等信息的方法](#窃取cookie等信息的方法)
 - [HTML与XHTML的区别](#html与xhtml的区别)
 - [网站文件资源优化](#网站文件资源优化)
 - [解决跨域的方法](#解决跨域的方法)
@@ -26,14 +32,45 @@
 
 <!-- /TOC -->
 
-## cookie的优缺点
+## 常用HTTP Code
+* `100 Continue` 使用curl发送超过1k的post请求时，首先发送头信息包含`Expect:100-continue`的请求，服务器回复100，收到响应后发送post数据。
+* `200 OK`/`201 Created`/`204 No Content`
+* `301 Moved Permanently`永久移动/`302 Found`临时移动, 响应头中的Location字段来跳转/`304	Not Modified`浏览器会访问缓存资源
+* `400 	Bad Request`请求语法错误，服务器无法理解/`401	Unauthorized`/`403 Forbidden`/`404 Not Found`/`405 Method Not Allowed`
+* `500 Internal Server Error`内部错误/`502 Bad Gateway` 网关请求相关服务器时收到无效响应/`503	Service Unavailable` 由于超载或系统维护，暂时无法处理请求/`504 Gateway Timeout`
 
+## 从输入URL到页面加载完成都发生了什么
+结合浏览器performance.timing可以了解到详细过程
+### 缓存相关
+1. 卸载原有页面: 以释放内存
+2. 重定向: 如果有本地缓存则直接使用，否则向服务器进行请求
+3. 应用缓存(app cache):
+后端配置识别manifest.appcache文件，前端添加`<html lang="en" manifest="manifest.appcache">`以及配置清单文件
+当第一次打开带有manifest属性的网页时，浏览器就会把离线文件下载下来，之后直接去缓存拿。
+对应js API: `window.applicationCache`
+
+### 网络相关
+4. DNS(Domain Name System): 通过域名查询IP(使用UDP)
+如果主机查询的本地域名服务器不知道被查询的域名IP
+递归查询：就向根域名服务器继续发出查询请求，根域名请求顶级域名，顶级请求权限域名...直到返回该域名IP
+迭代查询：就向根域名服务器继续发出查询请求，根域名返回顶级域名IP，主机请求顶级传回权限域名ip...直到返回该域名IP
+5. TCP: HTTP的下层协议，连接握手断开挥手。
+6. HTTP: 1.x版本中如果想并行请求必须使用多个TCP连接，浏览器对资源并发请求个数有限制。2.x版本可以将HTTP消息分解为不依赖的二进制帧，复用TCP来传输，在另一端组装。
+
+### 浏览器相关
+7. 文档解析与DOM加载
+
+## cookie的优缺点
 * 实现跨页面（非跨端口、域名、协议-跨域）全局变量
 * 可以设置有效期限（"expires=" + new Date().toGMTString()）
 * 储存在客户端，发送后由服务器读取(节省服务器资源)
 
 * 可生成的cookie可能有条数/大小限制，会被清理/禁用
 * 以明文储存在客户端，可能被窃取/篡改(使用HttpOnly防止js获取)
+
+### 窃取Cookie等信息的方法
+* 在被攻击页面XSS注入脚本，带上cookie跳转到攻击者的链接
+* 中间人攻击
 
 ## HTML与XHTML的区别
 `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">`
@@ -95,7 +132,7 @@ window.parent.document.body // 在子窗口
 ### 两种请求
 浏览器将CORS请求分为两类：
 简单请求:
-1. 请求方法是以下三种之一`HEAD/GET/POST`
+1. 请求方法是以下三种之一`HEAD/GET/POST`（HEAD类似于GET但只请求HTTP头部分）
 2. http头信息不超出以下几种字段
 * Accept
 * Accept-Language
