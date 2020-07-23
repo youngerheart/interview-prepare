@@ -8,6 +8,8 @@
 - [TCP报文/握挥手](#tcp报文握挥手)
   - [握手](#握手)
   - [挥手](#挥手)
+  - [为何握手三次，挥手四次](#为何握手三次挥手四次)
+  - [为何客户端在TIME-WAIT阶段要等2MSL](#为何客户端在time-wait阶段要等2msl)
 - [cookie的优缺点](#cookie的优缺点)
   - [窃取Cookie等信息的方法](#窃取cookie等信息的方法)
 - [HTML与XHTML的区别](#html与xhtml的区别)
@@ -17,6 +19,7 @@
   - [iframe](#iframe)
   - [window.postMessage](#windowpostmessage)
   - [AJAX](#ajax)
+- [GET与POST区别](#get与post区别)
 - [CORS](#cors)
   - [两种请求](#两种请求)
   - [简单请求](#简单请求)
@@ -103,6 +106,14 @@ Seq为A+1，表示收到服务器的确认号并作为自己的序号
 Ack为C+1，表示收到服务器端序号并+1作为自己的确认号
 随后客户端进入TIME-WAIT阶段开始等待2MSL，之后进入CLOSED阶段
 
+### 为何握手三次，挥手四次
+建立连接时，被动方服务器端结束CLOSED阶段不需要准备，可以直接返回SYN（创建连接）与ACK（确认序号有效）
+释放连接时，被动方服务器突然收到请求时不能立即释放连接，因为还有必要的数据要处理，所以先返回ACK确认序号有效，经过CLOSE-WAIT准备好后返回FIN释放连接报文。
+
+### 为何客户端在TIME-WAIT阶段要等2MSL
+MSL(Maximum Segment Lifetime)指一段TCP报文在传输过程中的最大生命周期，2MSL即服务端发出FIN和客户端发出ACK所能保持的最大时长
+如果在2MSL中又接收到服务器的FIN，说明服务器端由于网络原因没收到客户端的ACK，客户端再次发送ACK重新开始等待2MSL。
+
 ## cookie的优缺点
 * 实现跨页面（非跨端口、域名、协议-跨域）全局变量
 * 可以设置有效期限（"expires=" + new Date().toGMTString()）
@@ -123,7 +134,7 @@ Ack为C+1，表示收到服务器端序号并+1作为自己的确认号
 ## 网站文件资源优化
 * 使用webpack-uglify对代码文件进行合并压缩混淆
 * 使用CDN托管
-* 使用多个域名提供缓存：针对同一域名的请求有6个左右的并发限制，将静态资源放在多个域名下就能实现与其他资源的并发请求。
+* 使用多个域名提供缓存：浏览器针对同一域名的请求有6个左右的并发限制，将静态资源放在多个域名下就能实现与其他资源的并发请求。
 * 使用Expire/Cache-Control/ETag头
 ```
 Cache-Control: max-age=30 // 保存30秒
@@ -169,6 +180,10 @@ window.parent.document.body // 在子窗口
 * WebSocket
 该协议头信息中有一个Origin，服务器可以根据这个字段判断是否许可本次通信。
 * CORS
+
+## GET与POST区别
+* 都可以通过url与body传参，早期浏览器会有url长度限制（IE 2k,Chrome 8K）
+* 增删改查通常映射为POST/DELETE/PATCH(局部更新)PUT(替换)/GET，直接通过url参数增删改会造成CSRF攻击。安全性无区别。
 
 ## CORS
 是一个W3C标准，全称`Cross-origin resource sharing` 跨域资源共享，克服了Ajax只能同源使用的限制

@@ -18,6 +18,8 @@
 - [切换标签页时改变该页title](#切换标签页时改变该页title)
 - [document.write 与 innerHTML](#documentwrite-与-innerhtml)
 - [优雅降级与渐进增强](#优雅降级与渐进增强)
+- [Ajax写法](#ajax写法)
+- [js异步与延迟加载](#js异步与延迟加载)
 
 <!-- /TOC -->
 
@@ -186,5 +188,21 @@ document.addEventListener('visibilitychange', () => {
 innerHTML 是重绘页面的一部分。
 
 ## 优雅降级与渐进增强
-* 在所有新式浏览器都能正常工作，如果是老湿浏览器，逐步实现兼容或降级的体验。
+* 在所有新式浏览器都能正常工作，如果是老式浏览器，逐步实现兼容或降级的体验。
 * 被所有浏览器支持的基本功能开始，主播添加只有新式浏览器支持的功能以实现新特性。
+
+## Ajax写法
+
+```js
+var xhr = new XMLHttpRequest();
+xhr.onreadystatechange = function() {
+  if (xhr.readyState === 4 && xhr.status === 200) doSomething(xhr.responseText)
+}
+xhr.open('POST', 'URL', true);
+xhr.setRequestHeader('Content-Type', 'application/json');
+xhr.send(null)
+```
+
+## js异步与延迟加载
+script标签中设置`defer="defer"`属性，只对外部文件有效，表明脚本不影响页面结构，即立即下载，延迟执行
+script标签中设置`async`，只对外部文件有效，告诉浏览器立即下载文件，但不再保证他们的顺序

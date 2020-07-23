@@ -1,5 +1,7 @@
 <!-- TOC -->
 
+- [创建对象四种方式](#创建对象四种方式)
+- [继承的六种方法](#继承的六种方法)
 - [async/await 的实现](#asyncawait-的实现)
   - [Generator(生成器)](#generator生成器)
   - [next方法可以带一个参数，该参数就会被当作上一个yield表达式的返回值](#next方法可以带一个参数该参数就会被当作上一个yield表达式的返回值)
@@ -29,6 +31,64 @@
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
 
 <!-- /TOC -->
+
+## 创建对象四种方式
+1. 构造函数/自定义构造函数: `var obj = new Obj()`
+2. 字面量: `obj = {}`
+3. 工厂函数: `function Obj(...args) {...;return obj}`
+4. Object.create(__proto__, ?[propertiesObject])
+
+## 继承的六种方法
+1. 原型链：能通过instanceof和isPropertyOf的检测，但所有原型属性共有，无法传递参数
+2. 构造函数：可传递参数，但无法通过原型检测
+3. 前两种组合
+```js
+function Person(name) {
+  this.skills = [ 'php', 'javascript' ];
+  this.userName = name;
+}
+Person.prototype.showUserName = function(){
+  return this.userName;
+}
+function Teacher (name) {
+  Person.call(this, name ); // 第二次调用
+}
+Teacher.prototype = new Person(); // 第一次调用父类构造函数
+
+var oT1 = new Teacher( 'ghostwu' );
+oT1.skills.push( 'linux' );
+var oT2 = new Teacher( 'ghostwu' );
+console.log( oT2.skills ); //php,javascript
+console.log( oT2.showUserName() ); //ghostwu
+```
+4. 寄生式继承：类似于工厂函数，对传进的父对象加工后返回。
+5. 寄生组合式继承：由于组合继承会调用两次父类构造函数，考虑在不实例化父类的情况下获取其属性，需要拿到的原型仅仅是父类原型的一个副本
+```js
+function Person( uName ){
+  this.skills = [ 'php', 'javascript' ];
+  this.userName = uName;
+}
+Person.prototype.showUserName = function(){
+  return this.userName;
+}
+function Teacher ( uName ){
+  Person.call( this, uName );
+}
+
+function inheritPrototype( subObj, superObj ){
+  var proObj = Object.create(superObj.prototype); //复制父类superObj的原型对象
+  proObj.constructor = subObj; //constructor指向子类构造函数
+  subObj.prototype = proObj; //再把这个对象给子类的原型对象
+}
+
+inheritPrototype( Teacher, Person );
+
+var oT1 = new Teacher( 'ghostwu' );
+oT1.skills.push( 'linux' );
+var oT2 = new Teacher( 'ghostwu' );
+console.log( oT2.skills ); //php,javascript
+console.log( oT2.showUserName() ); //ghostwu
+```
 
 ## async/await 的实现
 
