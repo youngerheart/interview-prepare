@@ -29,7 +29,7 @@
   - [XSS](#xss)
   - [CSRF](#csrf)
 - [OAuth2与JWT](#oauth2与jwt)
-  - [授权码授权](#授权码授权)
+  - [四种授权方式](#四种授权方式)
   - [隐藏式授权](#隐藏式授权)
   - [密码式授权](#密码式授权)
   - [凭证式授权](#凭证式授权)
@@ -285,9 +285,10 @@ http://www.c.com:8002/content/delete/:id
 
 ## OAuth2与JWT
 OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。OAuth 2.0 的标准是 RFC 6749。
-### 授权码授权
+### 四种授权方式
 第三方应用先申请一个授权码，再用该码从后端申请令牌，所有与资源服务器的通信都在后端完成，避免令牌泄漏。
-1. A网站提供链接跳转到B网站:
+1. 授权码
+A网站提供链接跳转到B网站:
 ```
 https://b.com/oauth/authorize?
   response_type=code& // 要求返回授权码
@@ -295,12 +296,14 @@ https://b.com/oauth/authorize?
   redirect_uri=CALLBACK_URL& // 结果得出后跳转页面
   scope=read // 授权范围
 ```
-2. B站要求登录后跳转回A:
+2. 隐藏式
+B站要求登录后跳转回A:
 ```
 https://a.com/callback?code=AUTHORIZATION_CODE
 ```
 `AUTHORIZATION_CODE`即授权码
-3. A在拿到授权码后可以在后端向B请求令牌
+3. 密码式
+A在拿到授权码后可以在后端向B请求令牌
 ```
 https://b.com/oauth/token?
  client_id=CLIENT_ID& // 确认身份
@@ -309,7 +312,8 @@ https://b.com/oauth/token?
  code=AUTHORIZATION_CODE& // 上一步的授权码
  redirect_uri=CALLBACK_URL // 回调地址
 ```
-4. B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
+4. 凭证式
+B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
 ```
 {    
   "access_token":"ACCESS_TOKEN",

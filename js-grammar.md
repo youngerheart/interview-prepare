@@ -1,6 +1,7 @@
 <!-- TOC -->
 
 - [创建对象四种方式](#创建对象四种方式)
+- [原型与原型链](#原型与原型链)
 - [继承的六种方法](#继承的六种方法)
 - [async/await 的实现](#asyncawait-的实现)
   - [Generator(生成器)](#generator生成器)
@@ -37,6 +38,10 @@
 2. 字面量: `obj = {}`
 3. 工厂函数: `function Obj(...args) {...;return obj}`
 4. Object.create(__proto__, ?[propertiesObject])
+
+## 原型与原型链
+* 原型对象是普通的对象，是每个对象会自带的`__proto__`属性。如果一个原型对象不为null，则该对象链可以称为原型链。
+* `__proto__`可以理解为“构造器的原型”: `__proto__ === constructor.prototype`(适用于new操作符创建的对象)
 
 ## 继承的六种方法
 1. 原型链：能通过instanceof和isPropertyOf的检测，但所有原型属性共有，无法传递参数
