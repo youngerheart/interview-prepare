@@ -110,7 +110,7 @@ function showError(error)
 ### storage
 *同域下不同标签页的传值*
 ```
-`window.addEventListener('message', ({key, oldValue, newValue}))`
+`window.addEventListener('storage', ({key, oldValue, newValue}))`
 localStorage.setItem('key', 'value');
 ```
 
@@ -160,15 +160,16 @@ performance.mark('mark1')
 // 进行某耗时操作
 performance.mark('mark2')
 // 保存测量
-performance.measure('measure', 'mark1', 'mark2');
+performance.measure('measure1', 'mark1', 'mark2');
 // 获取所有mark类型的entries
-var mark = window.performance.getEntriesByType('mark');
+var mark = window.performance.getEntriesByType('mark'); // 当前mark时间点的数据
 // 返回 [...{duration: 0,name, startTime}]
 // 获取所有measure类型的entries
 var measure = window.performance.getEntriesByType('measure');
 // 返回 [...{duration: 0.1, name, startTime}]
+// getEntriesByType用的最多的是resource类型
 // 通过名字获取
-performance.getEntriesByName('measure'); 
+performance.getEntriesByName('measure1'); 
 // 清除标记/测量
 clearMarks(name)/clearMeasure(name)
 ```

@@ -123,13 +123,14 @@ function* foo(x) {
     yield a 
     yield b
 }
+
 const result = foo(0)
 result.next() //  {value: 0, done: false} x=0, a=0
 result.next(2) // {value: 4, done: false} a=2, b=4
 result.next(3) // {value: 0, done: false} b=3
-result.next(4) // {value: 2, done: false} a=4
+result.next(4) // {value: 2, done: false}
 
-function * gene(a, b) {
+function* gene(a, b) {
   console.log(a, b);
   var c = yield 'c';
   console.log("c====", c);
@@ -279,7 +280,7 @@ var Hi = (function (_super) {
 * 一般事实
 let 声明的变量的作用域是块级的；
 let 不能重复声明已存在的变量；
-let 有暂时死区，不会被提升。
+let 有暂时死区(声明之前不可用)，不会被提升。
 * 深层原理
 let 的「创建」过程被提升了，但是初始化没有提升。(这时不能使用，暂时性死区)
 var 的「创建」和「初始化」都被提升了。
@@ -287,7 +288,7 @@ function 的「创建」「初始化」和「赋值」都被提升了。
 
 ## null 与 undefined
 * `null`是一个表示无的对象，转为数值为0
-*`false`/`[]`/`’‘`转为数值时也为0*
+*`false`/`[]`/`""`转为数值时也为0*
 * undefined是一个表示无的原始类型，转为数值时为NaN
 
 ### null表示没有该对象
