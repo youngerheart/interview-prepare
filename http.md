@@ -108,7 +108,7 @@ Ack为C+1，表示收到服务器端序号并+1作为自己的确认号
 
 ### 为何握手三次，挥手四次
 建立连接时，被动方服务器端结束CLOSED阶段不需要准备，可以直接返回SYN（创建连接）与ACK（确认序号有效）
-释放连接时，被动方服务器突然收到请求时不能立即释放连接，因为还有必要的数据要处理，所以先返回ACK确认序号有效，经过CLOSE-WAIT准备好后返回FIN释放连接报文。
+释放连接时，被动方服务器突然收到请求时不能立即释放连接，因为还有必要的数据要处理，所以先返回ACK确认序号有效，经过CLOSE-WAIT准备好后返回FIN、ACK释放连接报文。
 
 ### 为何客户端在TIME-WAIT阶段要等2MSL
 MSL(Maximum Segment Lifetime)指一段TCP报文在传输过程中的最大生命周期，2MSL即服务端发出FIN和客户端发出ACK所能保持的最大时长
@@ -154,10 +154,11 @@ Expries: Wed, 08 Jul 2020 14:57:25 GMT
 * DOM无法取得
 * AJAX请求不能发送
 
-### Cookie/iframe
+### Cookie
 * 同一个一级域名的网页支持通过设置一样的`document.domain`共享cookie
 * 服务器可以在设置Cookie的时候指定其所属域名为一级域名，则前端不用做操作:
 `Set-Cookie: key=value; domain=.example.com; path=/`
+
 ### iframe
 如果iframe不是同源，就会报错
 ```js
@@ -169,7 +170,6 @@ window.parent.document.body // 在子窗口
 
 * hash识别符
 只是改变url的hash部分，页面不会刷新，父子之间都可以改变，监听hashchange事件可以得到通知
-
 
 ### window.postMessage
 在浏览器js的[实现多个标签页的通信](./js-browser.md#实现多个标签页的通信)章节。
@@ -212,7 +212,7 @@ Access-Control-Expose-Headers: 'Custom-Header'
 CORS请求时，xhr对象的getResponseHeader方法只能拿到六个字段
 `Cache-Control/Content-Language/Content-Type/Expires(到期)/Last-Modified/Pragma(注释用于控制缓存的老字段,值: no-cache)`
 
-**`xhr.widthCredentials`**
+**`xhr.withCredentials`**
 如果要发送Cookie到服务器，一方面服务器端要指定`Access-Control-Allow-Credentials`为true，还要打开xhr对象的开关
 ```js
 let xhr = new XMLHttpRequest;
@@ -285,10 +285,10 @@ http://www.c.com:8002/content/delete/:id
 
 ## OAuth2与JWT
 OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。OAuth 2.0 的标准是 RFC 6749。
-### 四种授权方式
+
+### 授权码式授权
 第三方应用先申请一个授权码，再用该码从后端申请令牌，所有与资源服务器的通信都在后端完成，避免令牌泄漏。
-1. 授权码
-A网站提供链接跳转到B网站:
+1. A网站提供链接跳转到B网站:
 ```
 https://b.com/oauth/authorize?
   response_type=code& // 要求返回授权码
@@ -296,14 +296,12 @@ https://b.com/oauth/authorize?
   redirect_uri=CALLBACK_URL& // 结果得出后跳转页面
   scope=read // 授权范围
 ```
-2. 隐藏式
-B站要求登录后跳转回A:
+2. B站要求登录后跳转回A:
 ```
 https://a.com/callback?code=AUTHORIZATION_CODE
 ```
 `AUTHORIZATION_CODE`即授权码
-3. 密码式
-A在拿到授权码后可以在后端向B请求令牌
+3. A在拿到授权码后可以在后端向B请求令牌
 ```
 https://b.com/oauth/token?
  client_id=CLIENT_ID& // 确认身份
@@ -312,8 +310,7 @@ https://b.com/oauth/token?
  code=AUTHORIZATION_CODE& // 上一步的授权码
  redirect_uri=CALLBACK_URL // 回调地址
 ```
-4. 凭证式
-B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
+4. B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
 ```
 {    
   "access_token":"ACCESS_TOKEN",
@@ -325,6 +322,7 @@ B收到请求后颁发令牌，向CALLBACK_URL发送一段JSON数据
   "info":{...}
 }
 ```
+
 ### 隐藏式授权
 对于纯前端应用，必须将令牌储存在前端。
 1. A跳转到B站授权

@@ -123,7 +123,7 @@
 * `baseline` 基线对其
 
 ### align-content
-只适用于多行flex容器，将每行作为一项进行对其
+只适用于多行flex容器，将每行作为一项进行对齐
 
 *reduce: 缩小 reverse: 相反*
 ### flex-direction
@@ -158,7 +158,7 @@
 ```
 
 * `auto-fill` 关键字
-单元格确定，容器大小不定，希望容纳尽可能多的单元格:
+单元格大小确定，容器大小不定，希望容纳尽可能多的单元格:
 ```css
 .container {
   display: grid;
@@ -169,7 +169,7 @@
 * `fr` 关键字
 * `minmax` 函数
 
-`fr`是fraction的缩写，意为“片段” (作用与flex-shrink类似)。
+`fr`是fraction的缩写，意为“片段” (作用与flex-flow类似)。
 `minmax()`函数产生一个长度范围，表示长度就在这个范围之中。它接受两个参数，分别为最小值和最大值。
 ```css
 .container {
