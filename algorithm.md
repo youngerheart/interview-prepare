@@ -53,6 +53,11 @@ let i = 0;
 
 给定课程总量以及它们的先决条件，请你判断是否可能完成所有课程的学习？
 
+**示例**
+输入: 2, [[1,0],[0,1]]
+输出: false
+解释: 总共有 2 门课程。学习课程 1 之前，你需要先完成​课程 0；并且学习课程 0 之前，你还应先完成课程 1。这是不可能的。
+
 **思路**
 
 * 示例 ：n = 6，先决条件表：[[3, 0], [3, 1], [4, 1], [4, 2], [5, 3, [5, 4]]
@@ -61,16 +66,15 @@ let i = 0;
 * 把这样一个 有向无环图 变成 线性的排序 就叫 拓扑排序
 有向图中有入度 和 出度：如果存在一条有向边A->B，则这条边给A增加了1个出度，给B增加了1个入度，所以顶点 0、1、2 的 入度为 0。 顶点 3、4、5 的入度为2
 
-作者：hyj8
-链接：https://leetcode-cn.com/problems/course-schedule/solution/bao-mu-shi-ti-jie-shou-ba-shou-da-tong-tuo-bu-pai-/
-来源：力扣（LeetCode）
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+* BFS (Breath First Search) 广度优先
+* DFS (Deep First Search) 深度优先
 
-
-作者：hyj8
-链接：https://leetcode-cn.com/problems/course-schedule/solution/bao-mu-shi-ti-jie-shou-ba-shou-da-tong-tuo-bu-pai-/
-来源：力扣（LeetCode）
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+课的BFS
+* 起初让 入度为 0 的课 入列
+* 然后逐个出列，课出列 即 课被选 ，并 减小相关课的入度
+* 判断是否有课的入度新变为 0，安排入列、再出列……
+* 直到没有 入度为 0 的课 可入列……
+* BFS遍历完所有课，如果仍有课的入度不为 0，即无法被选，完成不了所有课，返回false。否则，返回true：能找到一种顺序次序，把所有课上完
 
 ```js
 /**
@@ -79,7 +83,37 @@ let i = 0;
  * @return {boolean}
  */
 var canFinish = function(numCourses, prerequisites) {
-
+  const inDegree = new Array(numCourses).fill(0);
+  let graph = {};
+  // 开始将 有向无环图 变成 线性的排序
+  for (let i = 0; i < prerequisites.length; i++) {
+    inDegree[prerequisites[i][0]]++ // 课对应的入度
+    if (graph[prerequisites[i][1]]) {
+      // 出度对应课已经存在于邻接表
+      graph[prerequisites[i][1]].push(prerequisites[i][0]);
+    } else {
+      graph[prerequisites[i][1]] = [prerequisites[i][0]];
+    }
+  }
+  const queue = []; // BFS 需要的队列
+  for (let i = 0; i < inDegree.length; i++) {
+    // 推入所有入度为0的课
+    if (!inDegree[i]) queue.push(i)
+  }
+  let count = 0; // 拓扑顶点数量
+  while (queue.length) {
+    count++;
+    let selected = graph[queue.shift()]; // 可选的课的后续课
+    if (Array.isArray(selected)) {
+      for (let i = 0; i < selected.length; i++) {
+        if (!--inDegree[selected[i]]) {
+          // 后续课的入度-1后如果为0了入列
+          queue.push(selected[i])
+        }
+      }
+    }
+  }
+  return count === numCourses;
 };
 ```
 
