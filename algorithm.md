@@ -5,18 +5,8 @@
   - [++i 与 i++](#i-与-i)
 - [拓扑排序](#拓扑排序)
   - [课程表](#课程表)
-- [动态规划](#动态规划)
-  - [爬楼梯](#爬楼梯)
-  - [对称数](#对称数)
-  - [移动零](#移动零)
-  - [汇总区间](#汇总区间)
-  - [找出字符串中连续出现最多的字符](#找出字符串中连续出现最多的字符)
-  - [实现sum(1,2,3) == sum(1)(2)(3)](#实现sum123--sum123)
-  - [两数之和](#两数之和)
-  - [两数相加](#两数相加)
-  - [无重复字符的最长子串](#无重复字符的最长子串)
-- [内存策略](#内存策略)
-  - [LRU算法](#lru算法)
+- [二分法](#二分法)
+  - [二分查找](#二分查找)
 
 <!-- /TOC -->
 
@@ -83,8 +73,9 @@ let i = 0;
  * @return {boolean}
  */
 var canFinish = function(numCourses, prerequisites) {
+  // 需要一个记录所有课入度的数组inDegree，每节课所依赖的课形成的二维数组graph
   const inDegree = new Array(numCourses).fill(0);
-  let graph = {};
+  let graph = [];
   // 开始将 有向无环图 变成 线性的排序
   for (let i = 0; i < prerequisites.length; i++) {
     inDegree[prerequisites[i][0]]++ // 课对应的入度
@@ -116,6 +107,33 @@ var canFinish = function(numCourses, prerequisites) {
   return count === numCourses;
 };
 ```
+
+## 二分法
+
+### 二分查找
+给定一个n个元素有序的（升序）整型数组nums和一个目标值target，写一个函数搜索nums中的target，如果目标值存在返回下标，否则返回false
+
+```js
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number}
+ */
+let search = function(nums,target) {
+  var low = 0;
+  var high = nums.length - 1;
+  var mid;
+  var current;
+  while (low <= high) {
+    mid = Math.floor((low + high) / 2);
+    current = nums[mid]
+    if (current < target) low = mid + 1;
+    else if (current > target) high = mid - 1
+    else return mid;
+  }
+  return -1;
+}
+ ```
 
 ## 动态规划
 
