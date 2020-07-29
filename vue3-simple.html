@@ -1,0 +1,65 @@
+<html>
+  <div id="app"></div>
+  <script>
+    // vue2: new Vue()
+    // vue3: createApp()
+
+    // createAppAPI方法
+    createAppAPI = (render) => {
+      return function createApp(rootComponent) {
+        const app = {
+          mount(rootContainer) {
+            // 1. 存在vnode描述视图
+            const vnode = {
+              tag: 'h2',
+              props: {class: 'title'},
+              children: rootComponent.data().foo
+            }
+
+            // 2. 渲染到容器
+            render(vnode, rootContainer)
+          }
+        }
+        return app
+      }
+    }
+
+    // createRenderer方法，根据不同平台传入不同options
+    const createRenderer = (options) => {
+      const render = (vnode, container) => {
+        // 将vnode渲染为真实dom放到container中
+        // 1. 获取父元素
+        const parent = options.querySelector(container);
+        // 2. 创建元素
+        const child = options.createElement(vnode.tag);
+        if (typeof vnode.children === 'string') child.textContent = vnode.children;
+        options.insert(child, parent)
+      }
+      return {
+        render,
+        createApp: createAppAPI(render)
+      }
+    }
+
+    // 需要一个渲染器
+    // 参数是各种平台节点或属性操作
+    const renderer = createRenderer({
+      querySelector(str) {
+        return document.querySelector(str)
+      },
+      createElement(str) {
+        return document.createElement(str)
+      },
+      insert(child, parent) {
+        parent.appendChild(child)
+      }
+    })
+    renderer.createApp({
+      data() {
+        return {
+          foo: 'todo'
+        };
+      }
+    }).mount('#app')
+  </script>
+</html>

@@ -1,0 +1,77 @@
+<html>
+  <div id="app">
+    <canvas>
+      <!-- 原生canvas内部没有标签，只能使用api -->
+      <!-- <rect></rect> -->
+    </canvas>
+  </div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+    console.error(app)
+    // 保存需要的变量
+    let canvas, ctx
+    // h 为createElement函数
+    const { createRenderer, h } = Vue
+
+    // 创建渲染器
+    // 对于节点的操作
+    const nodeOps = {
+      createElement(tag) {
+        // 本demo需要创建的只有canvas
+        if (tag === 'canvas' || tag === 'div') {
+          canvas = document.createElement('canvas')
+          ctx = canvas.getContext('2d')
+          return canvas
+        }
+        // 对于rect，不需要创建dom直接返回标签
+        return { tag }
+      },
+      insert(child, parent) {
+        // 返回以数字值返回指定节点的节点类型1:Element 2:Attr 3:Text 8:Comment 9: Document
+        if (!child.nodeType) {
+          // canvas的子元素，需要储存
+          parent.elements = parent.elements || []
+          parent.elements.push(child)
+        } else {
+          // 对于canvas的处理
+          parent.appendChild(child)
+          // 绘制
+          draw()
+        }
+      }
+    }
+    // 对于属性的处理
+    const patchProp = (el, key, prevProp, nextProp) => {
+      // 保存新的属性值
+      el[key] = nextProp
+    }
+    const renderer = createRenderer({
+      ...nodeOps,
+      patchProp
+    })
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      // 开始绘制
+      canvas.elements.forEach((element) => {
+        if (element.tag = 'rect') {
+          const { x, y, width, height } = element
+          ctx.fillRect(x, y, width, height)
+        }
+      })
+    }
+
+    renderer.createApp({
+      render() {
+        const vnode = h('canvas', { width: 400, height: 300 }, [
+          h('rect', { width: 100, height: 100, x: 0, y: 0})
+        ])
+        return vnode
+      }
+    }).mount(app)
+  
+    // HTML5规范文档中指出:如果一个元素符合下面两条规则中的任一条,则window对象中必须要有与之对应的一个属性,属性值就是这个对象.
+    // 如果一个元素拥有ID属性,那么ID属性的属性值就会成为window对象的属性名.
+    // 如果一个元素拥有name属性,那么name属性的属性值就会成为window对象的属性名.但这个元素的标签名必须是: a, applet, area, embed, form, frame, frameset, iframe, img, object,其中的一个.
+  </script>
+</html>

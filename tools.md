@@ -48,5 +48,112 @@ module.exports = {
   ...
 }
 ```
-6. resolve.extensions
+5. resolve.extensions
 后缀尝试列表要尽可能小/频率出现最高的文件后缀要优先放在最前
+
+6. module.noParse
+不去解析不引用其他包的库
+
+```js
+module.exports = {
+  module: {
+    noParse: /jquery/
+  }
+}
+```
+
+7. HappyPack 多线程处理 loader任务
+
+```js
+const happyThreadPool = HappyPack.ThreadPool({ size: os.cpus().length });
+// 由于HappyPack 对file-loader、url-loader 支持的不友好，所以不建议对该loader使用
+module.exports = {
+  plugins: [
+    new HappyPack({
+      //用id来标识 happypack处理那里类文件
+      id: 'happyBabel',
+      //如何处理  用法和loader 的配置一样
+      loaders: [{
+        loader: 'babel-loader?cacheDirectory=true',
+      }],
+      //共享进程池
+      threadPool: happyThreadPool,
+      //允许 HappyPack 输出日志
+      verbose: true,
+    })
+  ]
+}
+```
+
+8. ParallelUglifyPlugin 多线程处理压缩任务
+
+```js
+module.exports = {
+  plugins: [
+    // 使用 ParallelUglifyPlugin 并行压缩输出的 JS 代码
+    new ParallelUglifyPlugin({
+      // 传递给 UglifyJS 的参数
+      uglifyJS: {
+        output: {
+          // 最紧凑的输出
+          beautify: false,
+          // 删除所有的注释
+          comments: false,
+        },
+        compress: {
+          // 在UglifyJs删除没有用到的代码时不输出警告
+          warnings: false,
+          // 删除所有的 `console` 语句，可以兼容ie浏览器
+          drop_console: true,
+          // 内嵌定义了但是只用到一次的变量
+          collapse_vars: true,
+          // 提取出出现多次但是没有定义成变量去引用的静态值
+          reduce_vars: true,
+        }
+      },
+    }),
+  ],
+};
+```
+
+### 优化使用体验（webpack-dev-server）
+* webpack --watch 是直接打包，文件多了很慢
+* webpack 无法热更新，需要手动更新
+```js
+// 原始webpack.config.js文件写法
+module.exports = {
+  entry: './src/js/index.js'
+  output: {
+    path: './dist',
+    filename: 'bundle.js'
+  }
+}
+```
+
+启动webpack-dev-server后，在目标文件夹是看不到编译后文件的，实时编译后文件都保存到了内存中
+
+`iframe-mode`
+```js
+`webpack-dev-server --content-base ./dist`
+```
+浏览器的访问路径为`localhost:8080/webpack-dev-server/index.html`，会访问`client/index.html`文件，其中会请求live.bundle.js文件，通过js新建Iframe并注入应用，同时js中包含socket.io的client代码，这样就和server建立了ws通讯。
+
+
+`inline-mode`
+```js
+`webpack-dev-server --inline --content-base ./dist`
+```
+浏览器的访问路径为为`localhost:8080/index.html`。服务会在webpack.config.js的入口配置文件再添加一个入口:
+```js
+module.exports = {
+  entry: {
+    app: ['webpack-dev-servewr/client?http://localhost:8080']
+  }
+}
+```
+将inlinejs打包进了bundle.js中。该js包含了socket.io的client代码，这样就和server建立了ws通讯。
+
+`hot replace`
+```js
+webpack-dev-server --hot --inline --content-base ./dist
+```
