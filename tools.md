@@ -1,3 +1,12 @@
+<!-- TOC -->
+
+- [Webpack优化](#webpack优化)
+  - [加快构建速度](#加快构建速度)
+  - [优化打包文件体积（webpack-bundle-analyzer）](#优化打包文件体积webpack-bundle-analyzer)
+  - [优化使用体验（webpack-dev-server）](#优化使用体验webpack-dev-server)
+
+<!-- /TOC -->
+
 ## Webpack优化
 
 ### 加快构建速度
@@ -115,6 +124,29 @@ module.exports = {
   ],
 };
 ```
+
+### 优化打包文件体积（webpack-bundle-analyzer）
+
+`npm i -D webpack-bundle-analyzer`
+
+```js
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+module.exports = {
+  plugins:[
+    ...,
+    new BundleAnalyzerPlugin({
+      analyzerHost:'127.0.0.1',
+      analyzerPort: 8889
+    })
+  ]
+}
+```
+
+在package.json中加入配置
+
+`"analyz": "NODE_ENV=production npm_config_report=true npm run build"`
+
+接下来npm run analyz浏览器会自动打开文件依赖图的网页
 
 ### 优化使用体验（webpack-dev-server）
 * webpack --watch 是直接打包，文件多了很慢

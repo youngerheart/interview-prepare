@@ -1,0 +1,18 @@
+<html>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+    const { createApp, reactive, toRefs } = Vue
+    // 创建实例
+    const app = createApp({
+      data() {
+        return {
+          msg: 'hello vue3'
+        }
+      }
+    }).mount('#app')
+
+    // 输出渲染函数，和Vue3 Template Explorer中的结果一样
+    console.log(app.$options.render);
+  </script>
+</html>

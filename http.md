@@ -14,8 +14,11 @@
   - [窃取Cookie等信息的方法](#窃取cookie等信息的方法)
 - [HTML与XHTML的区别](#html与xhtml的区别)
 - [网站文件资源优化](#网站文件资源优化)
+- [浏览器缓存](#浏览器缓存)
+  - [强缓存：浏览器在规定时间内强制使用缓存-`Expire/Cache-Control`](#强缓存浏览器在规定时间内强制使用缓存-expirecache-control)
+  - [协商缓存：询问服务器是否需要使用浏览器缓存](#协商缓存询问服务器是否需要使用浏览器缓存)
 - [解决跨域的方法](#解决跨域的方法)
-  - [Cookie/iframe](#cookieiframe)
+  - [Cookie](#cookie)
   - [iframe](#iframe)
   - [window.postMessage](#windowpostmessage)
   - [AJAX](#ajax)
@@ -29,7 +32,7 @@
   - [XSS](#xss)
   - [CSRF](#csrf)
 - [OAuth2与JWT](#oauth2与jwt)
-  - [四种授权方式](#四种授权方式)
+  - [授权码式授权](#授权码式授权)
   - [隐藏式授权](#隐藏式授权)
   - [密码式授权](#密码式授权)
   - [凭证式授权](#凭证式授权)
@@ -147,6 +150,16 @@ Expries: Wed, 08 Jul 2020 14:57:25 GMT
 如果为同一MD5值，则返回304即可，否则返回文件内容
 
 *使用`Cache-Control`在缓存未过期之前不会发起请求，`ETag`还是会发起*
+
+## 浏览器缓存
+### 强缓存：浏览器在规定时间内强制使用缓存-`Expire/Cache-Control`
+### 协商缓存：询问服务器是否需要使用浏览器缓存
+**`Last-Modified/If-Modified-Since`**
+
+两者都是GMT格式时间字符串，具体过程：
+浏览器第一次请求资源，服务器返回资源同时在响应头加上Last-Modified的header标识最后修改时间。浏览器再次请求时会在请求头加上If-Modified-Since的header，即上次Last-Modified的值。服务器判断如果资源没有变化则返回304。
+
+**ETag/If-None-Match**
 
 ## 解决跨域的方法
 不同源的两个页面有三种限制
