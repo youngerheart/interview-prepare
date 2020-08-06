@@ -10,6 +10,9 @@
   - [静态节点提升](#静态节点提升)
   - [补丁标记和动态属性记录](#补丁标记和动态属性记录)
   - [缓存事件处理程序](#缓存事件处理程序)
+  - [块 block](#块-block)
+- [vite](#vite)
+  - [手写实现](#手写实现-1)
 
 <!-- /TOC -->
 
@@ -169,9 +172,51 @@ export function render(_ctx, _cache) {
     
     _createVNode('h1', {
       title: _ctx.foo,
-      // 每次重新生成会导致组件不必要的更新，所以缓存起来
+      // render每次执行都重新生成函数会导致组件不必要的更新，所以可以缓存起来
       onClick: _cache[1] || (_cache[1] = $event => (_ctx.onclick('tom')))
     }, 'hello', 8, ['title', 'onClick'])
   ]))
 }
 ```
+### 块 block
+将模板的一部分（如一个div及其内容）标记为一个块，在render执行时只对其中的动态部分做比对
+
+```html
+<div id="app">
+  <h1></h1>
+  <h1></h1>
+  <h1>{{msg}}</h1>
+  <h1></h1>
+</div>
+```
+
+```js
+const _hoisted_1 = {id: 'app'} // 静态节点提升相关
+const _hoisted_2 = _createVNode('h1', null, 'hello', -1) /* HOISTED */
+const _hoisted_3 = _createVNode('h1', null, 'hello', -1) /* HOISTED */
+const _hoisted_4 = _createVNode('h1', null, 'hello', -1) /* HOISTED */
+export function render(_ctx, _cache) {
+  return (_openBlock(), _createBlock('div', _hoisted_1, [ // 将div保存为块
+    _hoisted_2,
+    _hoisted_3,
+    _createVNode('div', null, _toDisplayString(_ctx.msg), 1) /* TEXT */
+    _hoisted_4
+  ]
+}
+```
+
+## vite
+* 新一代开发/构建工具
+* 利用浏览器native ES module imports
+* 开发时按需解析，跳过打包过程
+* 不论项目多复杂，都能做到秒开
+
+```
+npm init vite-app vue3-demo && cd vue3-demo
+npm i && npm run dev
+```
+
+* 每次更新后，自动重新在服务端渲染一次
+* 浏览器会自动请求加载需要的模块（如.vue文件已经在服务端渲染加工为js）
+
+### 手写实现
