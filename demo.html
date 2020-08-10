@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>vue3 simple</title>
+</head>
+<body>
+  <div id="app"></div>
+</body>
+<script type="text/javascript">
+  const createAppAPI = (render) => {
+    return function createApp(rootComponent) {
+      return {
+        mount(container) {
+          const vnode = {
+            tag: 'div',
+            children: rootComponent.data().foo
+          }
+          render(vnode, container);
+        }
+      }
+    }
+  }
+
+  const createRenderer = (options) => {
+    const render = (vnode, container) => {
+      const parent = options.querySelector(container)
+      const child = options.createElement(vnode.tag)
+      if (typeof vnode.children === 'string') child.textContent = vnode.children
+      options.insert(child, parent);
+    }
+    return {
+      render,
+      createApp: createAppAPI(render)
+    }
+  }
+
+  const renderer = createRenderer({
+    querySelector(tag) {
+      return document.querySelector(tag);
+    },
+    createElement(tag) {
+      return document.createElement(tag);
+    },
+    insert(child, parent) {
+      parent.appendChild(child);
+    }
+  })
+
+  renderer.createApp({
+    data() {
+      return {
+        foo: 'todo'
+      }
+    }
+  }).mount('#app')
+</script>
+</html>

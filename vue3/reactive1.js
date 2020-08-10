@@ -13,7 +13,6 @@ function defineVue2Reactive(obj, key, val) {
 }
 
 function defineVue3Reactive(obj) {
-  // val作为函数内部变量，通过函数暴露给外界访问，形成闭包
   return new Proxy(obj, {
     get(target, key) {
       return target[key]
