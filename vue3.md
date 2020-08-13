@@ -101,10 +101,21 @@ mountComponent // renderer.ts 挂载
 setupComponent // component.ts 安装
 setupStatefulComponent // component.ts 安装状态组件
 finishComponentSetup // component.ts 结束时尝试编译
-compileToFunction as compile // index.ts
 
-* 如果没有render函数则编译一个
+```js
+// 如果没有render函数则编译一个
+if (!instance.render) Component.render = compile(Component.template, ...options)
+```
 * 在`src/index.ts`根文件指定一个compileToFunction函数
+```js
+// 包裹了源自`@vue/compiler-dom`模块的compile函数
+compileToFunction as compile // src/index.ts根文件
+```
+* compile函数又继承自来自``@vue/compiler-core`模块的baseCompile函数
+
+
+
+
 ```js
 const {code} = compile(template, options)
 const render = __GLOBAL__ ? new Function(code)() : new Function('Vue', code)(runtionDom)
