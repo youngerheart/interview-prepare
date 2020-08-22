@@ -12,7 +12,18 @@
 
 ## 基础
 ### js对象的深度克隆
-*可以通过`JSON.stringify/JSON.parse`实现，不过不能拷贝正则表达式类型、函数类型*
+1.可以通过`JSON.stringify/JSON.parse`实现，不能拷贝正则表达式类型/函数类型/循环使用对象/undefined
+2.使用MessageChannel（异步），不能拷贝函数
+```js
+function deepCopy(obj) {
+  return new Promise((resolve) => {
+    const { port1, port2 } = new MessageChannel();
+    port2.onmessage = event => resolve(ev.data);
+    port1.postMessage(obj);
+  });
+}
+```
+3.遍历
 ```js
 function clone(obj) {
   var buf;
