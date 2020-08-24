@@ -60,7 +60,7 @@ function initMixin(Vue) {
     // ...
     // 实例化渲染Watcher
     const updateComponent = () => {
-      console.log('vm.update(vm._render())');
+      console.log('vm._update(vm._render())');
       console.log('render方法生成渲染VNode并访问数据。模拟访问一下，触发getter，做依赖收集');
       // vm.update(vm._render())
       console.log(vm.message, vm.obj.key);
@@ -342,7 +342,6 @@ function flushSchedulerQueue () {
   flushing = true
   let watcher, id
   // 从小到大排列
-  console.log(queue.length);
   queue.sort((a, b) => a.id - b.id)
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
