@@ -32,13 +32,14 @@ nextTick
 JS运行机制（事件循环）
 1.所有同步任务都在主线程执行，形成一个执行栈
 （函数被调用时会压栈该函数，执行完毕该函数上下文出栈继续执行上一个上下文）
-2.主线程之外还有一个“消息队列”。只要异步任务（mouse click/network events）有了运行结果，就在队列中防止事件
+2.主线程之外还有一个“消息队列”。只要异步任务（mouse click/network events/IO）有了运行结果，就在队列中放置事件
 3.执行栈中所有同步任务执行完毕，系统会读取任务队列，对应的异步任务结束等待，进入执行栈，开始执行。
 4.主线程不断重复第三步。
 消息队列中存放着一个个任务（task），分为
 宏任务（macrotask）setImmediate > MessageChannel > setTimeout / setInterval
   浏览器: DOM event>network IO>UI render
 微任务（microtask）process.nextTick > Promise = MutationObserver
+每个执行栈中，执行顺序同步任务>微任务>宏任务
 */
 
 function Vue(options) {

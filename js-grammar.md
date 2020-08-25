@@ -27,6 +27,7 @@
   - [timers](#timers)
 - [判断浏览器还是NodeJS环境？](#判断浏览器还是nodejs环境)
 - [NodeJS优缺点](#nodejs优缺点)
+- [event loop，Nodejs与浏览器区别](#event-loopnodejs与浏览器区别)
 - [垃圾回收机制](#垃圾回收机制)
   - [WeakMap](#weakmap)
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
@@ -378,6 +379,20 @@ setIntervals与setTimeout在使用过后如果没有手动clear就会一直占�
 相对于多线程占用资源切换成本高，单线程占用内存少，不需要切换线程CPU开销降低，编写简单上手容易，线程安全性高。
 **劣势**
 CPU运算密集型会造成阻塞，无法利用多核，单线程异常会使得程序停止。
+
+## event loop，Nodejs与浏览器区别
+
+1.所有同步任务都在主线程执行，形成一个执行栈
+（函数被调用时会压栈该函数，执行完毕该函数上下文出栈继续执行上一个上下文）
+2.主线程之外还有一个“消息队列”。只要异步任务（mouse click/network events/IO）有了运行结果，就在队列中放置事件
+3.执行栈中所有同步任务执行完毕，系统会读取任务队列，对应的异步任务结束等待，进入执行栈，开始执行。
+4.主线程不断重复第三步。
+消息队列中存放着一个个任务（task），分为
+宏任务（macrotask）setImmediate > MessageChannel > setTimeout / setInterval
+  浏览器: DOM event>network IO>UI render
+微任务（microtask）process.nextTick > Promise = MutationObserver
+
+**在node11版本中，node下的event loop已经与浏览器趋于相同**
 
 ## 垃圾回收机制
 语言引擎有一张引用表，保存了所有资源的引用次数，如果次数为0，表示这个值不在用到，可以释放。

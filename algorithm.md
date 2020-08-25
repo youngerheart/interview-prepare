@@ -7,6 +7,7 @@
   - [课程表](#课程表)
 - [二分法](#二分法)
   - [二分查找](#二分查找)
+  - [将html字符串转化为类AST](#将html字符串转化为类ast)
 
 <!-- /TOC -->
 
@@ -432,3 +433,18 @@ LRUCache.prototype.put = function(key, value) {
  * obj.put(key,value)
  */
  ```
+
+### 将html字符串转化为类AST
+```js
+// dom的遍历
+let iterator = (el) => {
+  let obj = {};
+  let { localName, children } = el
+  obj.tag = localName
+  if (children && children.length) {
+    obj.children = Array.from(children).map(iterator)
+  }
+  return obj
+}
+console.log(iterator(document.querySelector('html')))
+```

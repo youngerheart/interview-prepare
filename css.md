@@ -38,6 +38,11 @@
 - [对语义化的理解？](#对语义化的理解)
 - [清除浮动](#清除浮动)
 - [rem, rm, vw/vh](#rem-rm-vwvh)
+- [回流与重绘](#回流与重绘)
+  - [如何减少](#如何减少)
+- [伪类和伪元素的区别](#伪类和伪元素的区别)
+  - [伪类](#伪类)
+  - [伪元素](#伪元素)
 
 <!-- /TOC -->
 
@@ -293,3 +298,36 @@ BFC是一个独立的布局环境，BFC中的元素布局不受外部影响。�
 * rem用作非根元素时，为相对于**根元素**字体大小的比例，用于根元素字体大小时，为相对于**初始**字体大小的比例。
 * em作为font-size的单位时，为相对于**父元素**字体大小的比例，用作其他属性时，为相对于**自身**字体大小的比例。
 * vw/vh 相对于浏览器宽高的1/100
+
+## 回流与重绘
+页面加载时，浏览器会把获取到的HTML代码解析成一个DOM树，将样式解析为样式结构体，组合后构建渲染render tree
+
+* 回流：render tree的一部分由于元素的尺寸布局隐藏等改变而需要重新构建，称为回流(reflow)每个页面至少有一次回流（页面加载时），之后浏览器会重新绘制受到影响的部分，称为重绘。
+* 重绘：render tree中的一些元素需要更新属性，只是影响元素外观，不会影响布局，如background-color，称为重绘（rewrite）
+* 回流必将引起重绘，重绘不一定会回流。
+* 浏览器做优化：当回流/重绘队列操作到一定数量/时间才会进行flush操作，将多次回流重绘合并为一次。
+
+### 如何减少
+1. 避免逐级更换样式，使用class。
+2. 避免循环操作DOM，应用好操作后在添加到指定位置。
+3. 避免循环读取 offsetLeft等属性，先暂存起来。
+4. 绝对定位有复杂动画的元素，或使用css3动画
+
+## 伪类和伪元素的区别
+### 伪类
+* 状态：link/visited/hober/active/focus
+* 结构：not/first-child/last-child/nth-child
+* 表单相关：checked/:disabled/:valid
+表示已存在元素处于某种通过DOM无法表示的状态
+
+### 伪元素
+* before/after
+* first-letter/first-line
+* selection/placeholder/backdrop
+伪元素用于使用css创建不存在于原有DOM树的元素，如::before，不受文档约束，不影响文档本身，只影响样式，不会出现在DOM树中，只在CSS渲染层加入。
+```js
+// 只可以获取到伪元素样式
+var myIdElement = document.getElementById("myId");
+var beforeStyle = window.getComputedStyle(myIdElement, ":before");
+console.log(beforeStyle.width); // 100px
+```
