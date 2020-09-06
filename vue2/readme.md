@@ -2,6 +2,7 @@
 
 - [v-if与v-for哪个优先级高](#v-if与v-for哪个优先级高)
 - [key的作用](#key的作用)
+- [组件与router中name的作用？](#组件与router中name的作用)
 - [双向绑定](#双向绑定)
   - [自定义组件使用v-model改变事件名或属性名](#自定义组件使用v-model改变事件名或属性名)
   - [v-model与.sync](#v-model与sync)
@@ -37,6 +38,30 @@
 多个相同类型节点在默认diff算法下会F-D一个个更新属性，最后插入一个原有元素E
 加入key后Diff算法可以识别该节点，找到正确位置直接插入
 同标签名元素的过渡切换(transition)也会用到key属性，否则无法触发
+
+## 组件与router中name的作用？
+* 当项目使用keep-alive时，可搭配name进行缓存过滤`<keep-alive exclude="Home"></keep-alive>`
+* 组件模板调用自身
+
+* 通过name属性，为一个页面中不同的router-view渲染不同的组件
+```html
+<!-- 将Hello组件渲染在name为Hello的router-view中，其余的渲染在默认组件 -->
+<div id="app">
+  <router-view></router-view>
+  <router-view name="Hello"></router-view>
+</div>
+```
+* 通过name传参，使用$router.name获取name值
+* 通过router-link传参
+```
+var router = new VueRouter({
+  routes: [
+    { name:'register', path: '/register/:id/:name', component: register }
+  ]
+})
+<router-link :to="{name:'register',params:{id:10,name:'lili'}}">注册</router-link>
+```
+* push/replace方法`this.$router.push({name: 'register'})`
 
 ## 双向绑定
 定义：是指指令v-model，可以绑定一个动态值到视图，同时视图变化可以改变该值，相当于v-bind:value与@input的语法糖
