@@ -51,3 +51,20 @@ server.js
 * 由于服务器已经渲染好了 HTML，我们显然无需将其丢弃再重新创建所有的 DOM 元素。相反，我们需要"激活"这些静态的 HTML，然后使他们成为动态的（能够响应后续的数据变化）。
 * data-server-rendered 特殊属性，让客户端 Vue 知道这部分 HTML 是由 Vue 在服务端渲染的，并且应该以激活模式进行挂载。
 * 在开发模式下，Vue 将推断客户端生成的虚拟 DOM 树 (virtual DOM tree)，是否与从服务器渲染的 DOM 结构 (DOM structure) 匹配。如果无法匹配，它将退出混合模式，丢弃现有的 DOM 并从头开始渲染。在生产模式下，此检测会被跳过，以避免性能损耗。
+
+## Next
+Nuxt.js 是一个基于 Vue.js 的服务端渲染应用框架。
+
+```
+npx create-nuxt-app <项目名>
+```
+### 目录
+* components
+* layouts
+* middleware
+* pages
+* plugins
+* static
+* store
+* nuxt.config.js
+* package.json

@@ -3,6 +3,11 @@
 - [基础](#基础)
   - [js对象的深度克隆](#js对象的深度克隆)
   - [++i 与 i++](#i-与-i)
+- [排序算法](#排序算法)
+  - [冒泡排序](#冒泡排序)
+  - [选择排序](#选择排序)
+  - [插入排序](#插入排序)
+  - [希尔排序](#希尔排序)
 - [拓扑排序](#拓扑排序)
   - [课程表](#课程表)
 - [二分法](#二分法)
@@ -13,18 +18,18 @@
 
 ## 基础
 ### js对象的深度克隆
-1.可以通过`JSON.stringify/JSON.parse`实现，不能拷贝正则表达式类型/函数类型/循环使用对象/undefined
-2.使用MessageChannel（异步），不能拷贝函数
+1. 可以通过`JSON.stringify/JSON.parse`实现，不能拷贝正则表达式类型/函数类型/循环使用对象/undefined
+2. 使用MessageChannel（异步），不能拷贝函数
 ```js
 function deepCopy(obj) {
   return new Promise((resolve) => {
     const { port1, port2 } = new MessageChannel();
-    port2.onmessage = event => resolve(ev.data);
+    port2.onmessage = event => resolve(event.data);
     port1.postMessage(obj);
   });
 }
 ```
-3.遍历
+3. 遍历
 ```js
 function clone(obj) {
   var buf;
@@ -44,6 +49,64 @@ i ++ === 0 // true
 let i = 0;
 ++ i === 0 // false
 ```
+
+## 排序算法
+### 冒泡排序
+从头到位比较相邻元素，如果第一个比第二个大，交换。最后一个元素，重复以上步骤
+```js
+function bubbleSort(arr) {
+  let { length } = arr
+  for (let i = 0; i < length; i++) {
+    for (let j = 0; j < length - 1 - i; j++) {
+      var temp = arr[j + 1];
+      if (arr[j] > arr[j + 1]) {// 第一个比第二个大
+        // 交换
+        arr[j + 1] = arr[j]
+        arr[j] = temp
+      }
+    }
+  }
+}
+```
+### 选择排序
+在未排序序列中找到最小(大)元素放到末尾(起始),再在剩余元素中重复该步骤
+```js
+function selectSort(arr) {
+  let { length } = arr
+  let currentIndex;
+  for (let i = 0; i < length; i++) {
+    currentIndex = i;
+    for (let j = i; j < length; j++) {
+      if (arr[currentIndex] < arr[j]) currentIndex = j // 首先unshift最大的数
+    }
+    console.log(arr[currentIndex]);
+    arr.unshift(arr.splice(currentIndex, 1)[0])
+  }
+}
+```
+
+### 插入排序
+从第一个元素开始，取下一个元素，在已排序列表从后到前比较，如果该元素小于某元素则插入某元素之前。
+```js
+function insertSort(arr) {
+  let { length } = arr
+  for (let i = 1; i < length; i++) {
+    let currentNum = arr.splice(i, 1)[0]
+    for (let j = 0; j < i; j++) {
+      if (currentNum < arr[j]) { // 当该元素小于已排序列表某元素，或者在列表末尾都需要插入
+        arr.splice(j, 0, currentNum)
+        break;
+      } else if (j === i - 1) {
+        arr.splice(j + 1, 0, currentNum)
+        break;
+      }
+    }
+  }
+}
+```
+
+### 希尔排序
+
 
 ## 拓扑排序
 

@@ -16,6 +16,7 @@
   - [解决了哪些问题](#解决了哪些问题)
   - [使用场景](#使用场景)
   - [具体用法](#具体用法)
+- [VueRouter中history模式和hash模式的异同](#vuerouter中history模式和hash模式的异同)
 
 <!-- /TOC -->
 
@@ -218,3 +219,8 @@ export default {
   }
 }
 ```
+
+## VueRouter中history模式和hash模式的异同
+
+* `#`即hash符号，Router的hash模式利用了window可以监听onhashchange事件变化做出相应。
+* h5中history被添加了pushState/replaceState方法，可以将url替换并且不刷新页面。需要服务器端配合将根路径下都定向到index.html

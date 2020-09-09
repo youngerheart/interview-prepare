@@ -15,7 +15,7 @@
 - [HTML与XHTML的区别](#html与xhtml的区别)
 - [网站文件资源优化](#网站文件资源优化)
 - [浏览器缓存](#浏览器缓存)
-  - [强缓存：浏览器在规定时间内强制使用缓存-`Expire/Cache-Control`](#强缓存浏览器在规定时间内强制使用缓存-expirecache-control)
+  - [强缓存：浏览器在规定时间内强制使用缓存而不请求服务器](#强缓存浏览器在规定时间内强制使用缓存而不请求服务器)
   - [协商缓存：询问服务器是否需要使用浏览器缓存](#协商缓存询问服务器是否需要使用浏览器缓存)
 - [解决跨域的方法](#解决跨域的方法)
   - [Cookie](#cookie)
@@ -31,6 +31,9 @@
 - [XSS与CSRF](#xss与csrf)
   - [XSS](#xss)
   - [CSRF](#csrf)
+- [sql注入方法](#sql注入方法)
+  - [类型](#类型)
+  - [风险点](#风险点)
 - [OAuth2与JWT](#oauth2与jwt)
   - [授权码式授权](#授权码式授权)
   - [隐藏式授权](#隐藏式授权)
@@ -153,7 +156,8 @@ Expries: Wed, 08 Jul 2020 14:57:25 GMT
 *使用`Cache-Control`在缓存未过期之前不会发起请求，`ETag`还是会发起*
 
 ## 浏览器缓存
-### 强缓存：浏览器在规定时间内强制使用缓存-`Expire/Cache-Control`
+### 强缓存：浏览器在规定时间内强制使用缓存而不请求服务器
+**`Expire(GMTString)/Cache-Control(max-age)`**
 ### 协商缓存：询问服务器是否需要使用浏览器缓存
 **`Last-Modified/If-Modified-Since`**
 
@@ -220,7 +224,7 @@ window.parent.document.body // 在子窗口
 如果Origin指定的域名在许可范围，则返回头应该多出：
 ```js
 Access-Control-Allow-Origin: http://api.bob.com
-Access-Control-Allow-Credentials: true // 资格、资历
+Access-Control-Allow-Credentials: true // 资格、资历.允许客户端携带验证信息，例如 cookie
 Access-Control-Expose-Headers: 'Custom-Header'
 ```
 CORS请求时，xhr对象的getResponseHeader方法只能拿到六个字段
@@ -230,7 +234,7 @@ CORS请求时，xhr对象的getResponseHeader方法只能拿到六个字段
 如果要发送Cookie到服务器，一方面服务器端要指定`Access-Control-Allow-Credentials`为true，还要打开xhr对象的开关
 ```js
 let xhr = new XMLHttpRequest;
-xhr.widhCredentials = true;
+xhr.widhCredentials = true; // 不需要cookie则不需要设置
 ```
 ### 非简单请求
 非简单请求时非表单类有特殊要求的请求，比如方法是`PUT/DELETE`,Content-Type是`application/json`等。
@@ -270,7 +274,7 @@ XSS(Cross Site Scripting)跨站脚本攻击
 ```js
 let dom = document.createElement('div');
 let strToEntity = (str) => {
-  dom.innerText = dom;
+  dom.innerText = str;
   return dom.innerHTML;
 }
 ```
@@ -296,6 +300,27 @@ http://www.c.com:8002/content/delete/:id
 * 验证码：强制用户与应用进行交互，但并不能所有操作都加上验证码。
 * Referer验证：验证请求源是否合法。
 * token验证：在请求中以参数/http头字段的形式添加一个随机token（由后端经过验证而产生）如果某个请求不包含该token或不正确则拒绝请求。token需要被保存/有有效期/刷新机制等
+
+## sql注入方法
+假设服务器未开启`magic_quote_gpc`
+### 类型
+* 数字型
+在url中发现`HTTP://www.aaa.com/test.php?id=1`猜测sql语句为`where id = 1`
+
+* 字符型
+登录表单，猜测有如下sql: `SELECT * FROM table WHERE username = 'admin'`
+在用户名输入框输入`' or 1=1#`密码随便输入，则sql变为
+`select * from users where username='' or 1=1#' and password=md5('')` // #后面的被注释了
+### 风险点
+* 通过报错消息提取表结构
+```js
+// Select指定的每一列都应该出现在Group By子句中，除非对这一列使用了聚合函数
+SELECT * FROM user WHERE username = 'root' AND password = 'root' HAVING 1 = 1 --
+// 报错：user.id无效，需要在聚合函数或者groupby中
+// having语句需要配合group by使用。递归后可以获取表名与所有字段名
+SELECT * FROM user WHERE username = 'abc' AND password = 'abc' AND 1 > (SELECT TOP 1 username FROM users)
+// 报错：第一个用户名root转换为int类型时失败
+```
 
 ## OAuth2与JWT
 OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。OAuth 2.0 的标准是 RFC 6749。
