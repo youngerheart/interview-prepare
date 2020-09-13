@@ -8,6 +8,8 @@
   - [选择排序](#选择排序)
   - [插入排序](#插入排序)
   - [希尔排序](#希尔排序)
+  - [归并排序](#归并排序)
+  - [快速排序](#快速排序)
 - [拓扑排序](#拓扑排序)
   - [课程表](#课程表)
 - [二分法](#二分法)
@@ -106,7 +108,88 @@ function insertSort(arr) {
 ```
 
 ### 希尔排序
+* 取一个小于序列长度n的整数d1作为一个增量，将所有距离为d1的记录放在同一个组，对各组进行逐个对比交换
+* 再取d1的一半的整数d2为增量分组做直接插入排序，直到增量为1
 
+```js
+function shellSort(arr) {
+  let { length } = arr
+  let increase = length
+  let temp;
+  while (increase) {
+    increase = Math.floor(increase / 2);
+    for (let i = 0; i < length - increase; i++) {
+      if (arr[i] > arr[i + increase]) {
+        // 做交换
+        temp = arr[i]
+        arr[i] = arr[i + increase]
+        arr[i + increase] = temp
+      }
+    }
+  }
+}
+```
+
+### 归并排序
+* 将未排序序列拆分为序列长度n个长度为1的子序列
+* 申请空间，其大小为两个已经排序序列之和，用来存放合并后的序列
+* 设定两个指针，最初位置分别为两个已经排序序列的起始位置
+* 比较两个指针指向的元素，较小的放入合并空间，移动指针到下一位置，直到合并完成
+* 重复以上过程，直到已排序序列只剩一个
+
+```js
+function mergeSort(arr) {
+  let { length } = arr;
+  if (length === 1) return arr;
+  let midPoint = Math.floor(length / 2)
+  let left = arr.slice(0, midPoint);
+  let right = arr.slice(midPoint, length);
+  return merge(mergeSort(left), mergeSort(right));
+}
+function merge(left, right) {
+  let pointL = 0, pointR = 0;
+  let mergedArr = [];
+  while (pointL < left.length && pointR < right.length) {
+    if (left[pointL] < right[pointR]) {
+      mergedArr.push(left[pointL])
+      pointL++;
+    } else {
+      mergedArr.push(right[pointR])
+      pointR++;
+    }
+  }
+  while (pointL < left.length) {
+    mergedArr.push(left[pointL])
+    pointL++;
+  }
+  while (pointR < right.length) {
+    mergedArr.push(right[pointR])
+    pointR++;
+  }
+  return mergedArr;
+}
+```
+
+### 快速排序
+* 从数列中取出一个数作为基准数
+* 将比这个数大的数全部放在右边，小于或等于它的数全部放到左边。
+* 对左右区间重复第二部，直到区间只有一个数
+
+```js
+function quickSort(arr) {
+  let { length } = arr
+  if (length <= 1) return arr; // 有空数组的情况
+  let midPoint = Math.floor(length / 2);
+  let leftArr = [];
+  let rightArr = [];
+  for (let i = 0; i < length; i++) {
+    if (i === midPoint) continue;
+    if (arr[i] <= arr[midPoint]) leftArr.push(arr[i])
+    else rightArr.push(arr[i])
+  }
+  return quickSort(leftArr).concat([arr[midPoint]], quickSort(rightArr));
+}
+```
 
 ## 拓扑排序
 

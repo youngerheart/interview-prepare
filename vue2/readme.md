@@ -101,9 +101,24 @@ v-model只能有一个，.sync可以修饰多个属性。
 必要性：在Vue1中每个dep都有专门的watch负责更新，项目规模变大就会成为性能瓶颈。vue2优化为一个组件只有一个watcher，即需要patch精确找出发生变化的地方。
 在何处调用：数据发生变化时触发渲染作为watcher的getter函数的updateComponent函数中的vm._update(vm._render())，执行render函数得到新的newVNode，之后执行patch比对之前的oldVNode。
 如何运作：
-* 深度优先：如果有子节点优先比较子节点
-* 同层比较：假设头尾节点可能相同先做尝试，没有相同节点再遍历查找
-* 借助key来精准定位更新位置
+* 不是相同节点: isSameNode为false则销毁旧的vnode渲染新的vnode（即diff为同层对比）
+* 是相同节点： 调用patchVNode方法。如果新vnode是文字，则直接替换，否则对children进行对比
+* 有新children则addVNodes没新的则removeVNode，都存在则进行diff：updateChildren
+* 在一个while循环中不断对新旧节点两端进行对比(旧首新首/旧尾新尾/旧首新尾/旧尾新首)，将指针不断向内部收缩，直到没有节点可以对比。
+```js
+function sameVnode (a, b) {
+  return (
+    a.key === b.key && (
+      (
+        a.tag === b.tag &&
+        a.isComment === b.isComment &&
+        isDef(a.data) === isDef(b.data) &&
+        sameInputType(a, b)
+      )
+    )
+  )
+}
+```
 
 ## 跨组件通信
 ### 父子组件通信
