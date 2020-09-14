@@ -3,6 +3,12 @@
 - [基础](#基础)
   - [js对象的深度克隆](#js对象的深度克隆)
   - [++i 与 i++](#i-与-i)
+  - [重建二叉树](#重建二叉树)
+  - [两个栈实现队列](#两个栈实现队列)
+  - [反转链表](#反转链表)
+  - [创建二叉树](#创建二叉树)
+  - [遍历二叉树](#遍历二叉树)
+  - [字典树](#字典树)
 - [排序算法](#排序算法)
   - [冒泡排序](#冒泡排序)
   - [选择排序](#选择排序)
@@ -51,6 +57,13 @@ i ++ === 0 // true
 let i = 0;
 ++ i === 0 // false
 ```
+
+### 重建二叉树
+### 两个栈实现队列
+### 反转链表
+### 创建二叉树
+### 遍历二叉树
+### 字典树
 
 ## 排序算法
 ### 冒泡排序
@@ -308,18 +321,36 @@ let search = function(nums,target) {
  * @return {number}
  */
 var climbStairs = function(n) {
+  // 经典递归算法，首先确定边界
+  if (n === 1) return 1;
+  if (n === 2) return 2;
   // 爬到n阶楼梯的方案数等于爬到n-1和爬到n-2阶方案数之和
-  let p = 0;
-  let q = 0;
-  let r = 1;
-  for (let i = 0; i < n; i++) {
-    p = q;
-    q = r;
-    r = p + q;
-  }
-  return r;
+  return climbStairs(n - 1) + climbStairs(n - 2)
 };
 ```
+### 变态爬楼梯
+```js
+// f(1) = 1
+// f(2) = f(1) + 1
+// f(3) = f(2) + f(1) + 1
+// f(4) = f(3) + f(2) + f(1) + 1
+// f(5) = f(4) + f(3) + f(2) + f(1) + 1
+/**
+ * @param {number} n
+ * @return {number}
+ */
+let cache = [0, 1, 2]
+var crazyClimbStairs = function(n) {
+  cache[n] = 1 // 初始值总是为1
+  for (let i = n - 1; i >= 1; i--) {
+    cache[n] += crazyClimbStairs(i)
+  }
+  return cache[n]
+};
+console.log(crazyClimbStairs(10));
+console.log(cache);
+```
+
 ### 对称数
 * 各位数字左右对称
 ```js
