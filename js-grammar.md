@@ -14,6 +14,7 @@
 - [null 与 undefined](#null-与-undefined)
   - [null表示没有该对象](#null表示没有该对象)
   - [undefined表示缺少值](#undefined表示缺少值)
+- [JS隐式类型转换](#js隐式类型转换)
 - [new操作符具体做了什么](#new操作符具体做了什么)
 - [Map/Set对象用法](#mapset对象用法)
   - [Map](#map)
@@ -111,7 +112,7 @@ let b = func.next();
 let c = func.next();
 let d = func.next();
 console.log(a, b, c, d);
-// {value: "11111111", done: false} {value: "22222222", done: false} {value: "3333333", done: true} {value: undefined, done: true}
+// {value: "step 1", done: false} {value: "step 2", done: false} {value: "step 3", done: true} {value: undefined, done: true}
 ```
 Generator函数是分段执行的，yield表达式是暂停执行的标记，next方法可以恢复执行。
 ### next方法可以带一个参数，该参数就会被当作上一个yield表达式的返回值
@@ -178,7 +179,7 @@ console.log(iterator.next());// "{ value: undefined, done: true }"
 JavaScript 语言中，Thunk 函数替换的不是表达式，而是多参数函数，将其替换成单参数的版本，且只接受回调函数作为参数
 ```js
 var Thunk = function(fn){
-  return function (){
+  return function () {
     var args = Array.prototype.slice.call(arguments);
     return function (callback){
       args.push(callback);
@@ -199,9 +200,9 @@ function run(fn) {
     if (err) throw err;
     var result = gen.next(data); // 改变了上一个yield的返回值
     if (result.done) return;
-    // generator函数的yield返回的异步函数的情况下这样使用
+    // generator函数的yield返回了函数
     // value === callback
-    result.value(next); // 这里才正式开始求值
+    result.value(next); // 这里传入回调，正式开始求值
   }
 
   next();
@@ -213,8 +214,8 @@ run(gen);
 ```js
 var gen = function* () {
   // readFile已经被转换为 Thunk 函数
-  var f1 = yield readFile('xx.avi');
-  var f2 = yield readFile('xx.mp4');
+  var f1 = yield readFileThunk('xx.avi');
+  var f2 = yield readFileThunk('xx.mp4');
   // ...
 }
 run(gen);
@@ -301,10 +302,31 @@ function 的「创建」「初始化」和「赋值」都被提升了。
 * 函数没有注明返回值的默认返回值
 * 对象没有被赋值的属性
 
+## JS隐式类型转换
+如果运算符两边数据不统一就无法运算，编译器会将两边转换为一致的数据类型再计算
+* 转为string: `+`字符串连接符
+* 转为number: `++|--`自增减运算符, `+|-|*|/`算数运算符,`>/</==/!=等`关系运算符
+* 转为boolean: `!`逻辑非运算符
+```js
+1 + 'true' // string: 1true
+1 + true // number: 2
+1 + undefined // 1 + Number(undefined) = 1 + NaN = NaN
+1 + null // 1 + Number(null) = 1 + 0 = 1
+
+'2' > '10' // 比较unicode编码 '2'.charCodeAt() > '10'.charCodeAt() => 50 > 49 => true
+'abc' > 'b' // 逐个字符比较，第一个为小于则直接返回false
+
+// 特殊情况
+undefined === undefined // true
+undefined == true // true
+null === null // true
+NaN == NaN // false NaN和任何数据不等
+```
+
 ## new操作符具体做了什么
 * 创建一个新对象，将构造函数的作用域赋值给新对象
 `obj.__proto__ = Func.prototype`
-* 执行构造函数中的代码（会覆盖原型链中的同名属性）
+* 执行构造函数中的代码（**会覆盖原型链中的同名属性**）
 `Func.call(obj)`
 * 返回该对象
 

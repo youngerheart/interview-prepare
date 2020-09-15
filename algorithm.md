@@ -16,6 +16,8 @@
   - [希尔排序](#希尔排序)
   - [归并排序](#归并排序)
   - [快速排序](#快速排序)
+- [红黑树](#红黑树)
+  - [特征](#特征)
 - [拓扑排序](#拓扑排序)
   - [课程表](#课程表)
 - [二分法](#二分法)
@@ -64,6 +66,37 @@ let i = 0;
 ### 创建二叉树
 ### 遍历二叉树
 ### 字典树
+* 定义:一个节点保存一个字符。为了表示一个单词是否出现，可以给最后的字符加上标记。根节点为空。
+* 作用:统计排序保存字符串。
+
+步骤
+1. 将单词插入字典树
+2. 在字典树查找单词
+```js
+// 定义一个节点
+function TrieNode(val) {
+  this.val = val;
+  this.children = [];
+  this.count = 0;
+}
+function insert(root, str) {
+  if (str[0] !== undefined) {
+    // 第一个字符的逻辑
+    if (root.children[str[0]] === undefined) {
+      // 没有该节点则创建
+      root.children[str[0]] = new TrieNode();
+    } else {}
+    insert(root.children[str[0]], str.slice(1))
+  } else {
+    // 单词完成插入，打标记
+    root.count++;
+  }
+}
+
+let root = new TrieNode('');
+['and', 'about', 'as', 'boy', 'by', 'because', 'as'].forEach(str => insert(root, str))
+console.log(root)
+```
 
 ## 排序算法
 ### 冒泡排序
@@ -203,6 +236,14 @@ function quickSort(arr) {
   return quickSort(leftArr).concat([arr[midPoint]], quickSort(rightArr));
 }
 ```
+
+## 红黑树
+### 特征
+1. 每个节点是黑色，或者红色
+2. 根节点是黑色
+3. 每个叶子节点是黑色（空NIL或NULL的叶子节点）
+4. 如果一个节点是红色，则子节点必须是黑色
+5. 一个节点到该节点的子孙节点的所有路径包含相同数目的黑节点
 
 ## 拓扑排序
 

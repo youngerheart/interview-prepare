@@ -86,7 +86,7 @@ Flags为SYN，表示“创建新链接”
 Seq为X(X一般为1)，之后客户端进入SYN-SEND阶段
 2. 服务器端收到请求后，结束LISTEN阶段并返回报文：
 Flags为SYN和ACK，表示“创建新链接/确定客户端Seq序号有效，可以正常接收数据同意创建连接”
-Seq为Y，Ack为X+1，表示收到客户端序号，将其+1作为自己的确认号，之后服务器进入SYN-RCVD阶段
+Seq为Y，ACK为X+1，表示收到客户端序号，将其+1作为自己的确认号，之后服务器进入SYN-RCVD阶段
 3. 客户端收到响应后，明确了数据传输正常，结束SYN-SENT阶段并返回报文：
 Flag为ACK，表示“响应有效”
 Seq为X+1，表示收到服务器端的确认号，将其作为自己的序号
@@ -225,7 +225,7 @@ window.parent.document.body // 在子窗口
 ```js
 Access-Control-Allow-Origin: http://api.bob.com
 Access-Control-Allow-Credentials: true // 资格、资历.允许客户端携带验证信息，例如 cookie
-Access-Control-Expose-Headers: 'Custom-Header'
+Access-Control-Expose-Headers: 'Custom-Header' // 简单请求可以暴露的首部
 ```
 CORS请求时，xhr对象的getResponseHeader方法只能拿到六个字段
 `Cache-Control/Content-Language/Content-Type/Expires(到期)/Last-Modified/Pragma(注释用于控制缓存的老字段,值: no-cache)`

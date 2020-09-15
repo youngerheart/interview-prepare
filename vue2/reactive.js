@@ -13,19 +13,20 @@ new Vue (Observer/Deps初始化)
 component.$mount (触发依赖收集)
 在该方法中会实例化渲染watcher，其构造函数最后调用get方法
 在其中pushTarget，将自身压栈到targetStack数组，再将自身作为Dep的静态属性target
-随后触发自身getter函数，即传入的updateComponen函数
+随后触发自身getter函数，即传入的updateComponent函数
 该函数调用vm.update(vm._render())触发render函数，生成渲染vnode并访问数据，触发getter
 getter中调用到dep.depend()方法，即Dep.target.addDep(this)
 在该函数中调用了dep.addSub(this)，将该dep推进watcher实例的deps数组，在作为响应式变量属性的dep的subs数组添加了当前watcher实例。
 
 dep.notify(派发更新)
+dep存在于响应式变量的__ob__属性中
 当触发响应式变量setter时调用该函数，对在该dep的subs中的watcher触发update函数，再进入queueWatcher函数。
 将watcher按照id从小到大排进队列中，执行nextTick(flushSchedulerQueue)方法
 在flushSchedulerQueue中对队列从小到大排列，确保
 1.组件更新先父后子
 2.用户自定义watcher先于渲染watcher执行（自定义watcher先于渲染watcher创建）
 3.组件在父组件watcher执行时被销毁，其watcher执行可以被跳过
-对队列中的watcher全部调用run方法：通过this.get获取新值，如果和旧值不等，则执行watcher的回调函数
+对队列中的watcher全部调用run方法：通过this.get获取新值(对渲染watcher来说最终执行update->patch)，如果和旧值不等，则执行watcher的回调函数(noop)
 最后调用resetSchedulerState方法：清空队列和用到的临时数据
 
 nextTick
@@ -54,6 +55,20 @@ function initMixin(Vue) {
     vm.$set = set;
     // ...
     initState(vm)
+    if (vm.$options.el) vm.$mount(vm.$options.el);
+  }
+  Vue.prototype._render = function () {
+    // const { render } = vm.$options
+    // <div id="app">{{ message }}</div>
+    const render = function(createElement) {
+      return createElement('div', {
+        attrs: {
+          id: 'app'
+        }
+      }, this.message)
+    }
+    vnode = render.call(vm._renderProxy, vm.$createElement)
+    return vnode
   }
   Vue.prototype.$mount = function(el) {
     const vm = this;
@@ -63,7 +78,7 @@ function initMixin(Vue) {
     const updateComponent = () => {
       console.log('vm._update(vm._render())');
       console.log('render方法生成渲染VNode并访问数据。模拟访问一下，触发getter，做依赖收集');
-      // vm.update(vm._render())
+      // vm._update(vm._render())
       console.log(vm.message, vm.obj.key);
       if (!vm._isCreated) {
         vm.$options.created.call(vm)
@@ -304,6 +319,7 @@ class Watcher {
   }
   run() {
     const value = this.get()
+    console.log('oldValue:', this.value, 'newValue:', value);
     if (value !== this.value || isObject(value) || this.deep) {
       const oldValue = this.value;
       this.cb.call(this.vm, value, oldValue)
