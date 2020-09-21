@@ -207,3 +207,6 @@ xhr.send(null)
 ## js异步与延迟加载
 script标签中设置`defer="defer"`属性，只对外部文件有效，表明脚本不影响页面结构，即立即下载，延迟执行
 script标签中设置`async`，只对外部文件有效，告诉浏览器立即下载文件，但不再保证他们的顺序
+
+IntersectionObserver
+resizeobserver

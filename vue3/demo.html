@@ -1,0 +1,38 @@
+<html>
+  <div id="counter">
+    <p>Counter: {{counter}}</p>
+    <button @click="add">add</button>
+  </div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+    // 实现这坨简单的东西
+  </script>
+  <script>
+    const { onMounted, onUpdated, onUnmounted } = Vue
+    const Counter = {
+      data () {
+        return {
+          counter: 0
+        }
+      },
+      setup(props) {
+        onMounted(() => {
+          console.log('mounted!')
+        })
+        onUpdated(() => {
+          console.log('updated!')
+        })
+        onUnmounted(() => {
+          console.log('unmounted!')
+        })
+        return {} // anything returned here will be available for the rest of the component
+      },
+      methods: {
+        add() {
+          this.counter++
+        }
+      }
+    }
+    Vue.createApp(Counter).mount('#counter')
+  </script>
+</html>
