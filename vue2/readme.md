@@ -93,8 +93,8 @@ Vue.component('base-checkbox', {
 ```
 
 ### v-model与.sync
-* v-model是v-bind:value与@input的语法糖
-* .sync是v-bind:value与@update:value的语法糖
+* v-model是v-bind:key与@input的语法糖
+* .sync是v-bind:key与@update:key的语法糖
 如果对自定义组件修改model属性，将event修改为update则两者相同。
 v-model只能有一个，.sync可以修饰多个属性。
 
