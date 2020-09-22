@@ -1,3 +1,10 @@
+<!-- TOC -->
+
+- [中间件原理](#中间件原理)
+  - [compose](#compose)
+
+<!-- /TOC -->
+
 ## 中间件原理
 需要在KoaMiddle类中实现以下方法
 * constructor: 定义一个中间件列表Middle再调用this.composeFn = compose(this.middleWareList)
