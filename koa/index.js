@@ -1,52 +1,38 @@
 const http = require('http');
 
-class koaMiddleWare {
+class Koa {
   constructor () {
-    this.middlewareList = []
+    this.middleWareList = []
+    this.composeFn = compose(this.middleWareList)
   }
 
   use (fn) {
-    this.middlewareList.push(fn)
+    this.middleWareList.push(fn)
     return this
   }
 
-  createContext (req, res) {
-    return ctx = {
-      req,
-      res
-    }
-  }
-
-  handleRequest(ctx, middleWare){
-    //这个middlWare就是compose函数返回的fn
-    //执行middleWare(ctx) 其实就是执行中间件函数,然后再用Promise.then封装返回
-    return middleWare(ctx)
-  }
-
-  callback () {
-    const fn = compose(this.middleWareList)
-
-    return (req,res) => {
-      const ctx = this.createContext(req,res)
-      return this.handleRequest(ctx, fn)
-    }
-  }
-
   listen(...args) {
-    const server = http.createServer(this.callback())
+    const server = http.createServer((req,res) => {
+      const ctx = createContext(req, res)
+      this.composeFn(ctx)
+      res.write("hello nodejs");
+      res.end();
+    })
     return server.listen(...args)
   }
 }
 
-//传入中间件列表
-function compose(middlewareList){
+//传入中间件列表，拼装为一个洋葱模型执行函数
+function compose(middleWareList) {
   //返回一个函数 接收ctx
-  return function(ctx){
+  return function(ctx) {
     //定义一个派发器，内部实现了next机制
-    function dispatch(i){
+    function dispatch(i) {
       //获取当前中间件
-      const fn = middlewareList[i]
-      try{
+      const fn = middleWareList[i]
+      if (!fn) return;
+      try {
+        // 保证函数执行的结果必须是 Promise 类型
         return Promise.resolve(
           //通过i+1获取下一个中间件
           fn(ctx, dispatch.bind(null, i + 1))
@@ -59,3 +45,14 @@ function compose(middlewareList){
     return dispatch(0)
   }
 }
+
+// 拼装ctx对象，这里只做最简单操作
+function createContext (req, res) {
+  const ctx = {
+    req,
+    res
+  }
+  return ctx;
+}
+
+module.exports = Koa
