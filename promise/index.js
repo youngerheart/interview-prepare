@@ -75,6 +75,25 @@ CustomPromise.prototype.catch = function (onRejected) {
   this.then(null, onRejected)
 }
 
+CustomPromise.all = function (promises) {
+  let results = []
+  let index = 0
+  return new Promise((resolve, reject) => {
+      function processData(i, data) {
+          results[i] = data
+          index++
+          if (index === promises.length) {
+              resolve(results)
+          }
+      }
+      promises.forEach((promise, i) => {
+          promise.then(data => {
+              processData(i, data)
+          }, reject)
+      })
+  })
+}
+
 /**
  * 解析then返回值与新Promise对象
  * @param {Object} promise 新的Promise对象
@@ -87,25 +106,18 @@ function resolvePromise(promise, data, resolve, reject) {
     reject(new TypeError('Promise发生循环引用'));
   }
 
-  if (data !== null && (typeof data === 'object' || data === 'function')) {
-    // 可能是个对象或者函数
+  if (data instanceof CustomPromise) {
     try {
-      let then = data.then;
-      if (typeof then === 'function') {
-        then.call(
+        data.then.call(
           data,
           res => {
-            // resolve(y)
-            // 递归调用，传入y若是Promise对象，继续循环
+            // 递归调用，传入res若是Promise对象，继续循环
             resolvePromise(promise, res, resolve, reject);
           },
-          rej => {
-            reject(rej);
+          err => {
+            reject(err);
           },
         );
-      } else {
-        resolve(x);
-      }
     } catch (e) {
       reject(e);
     }
