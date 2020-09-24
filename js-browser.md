@@ -20,6 +20,13 @@
 - [优雅降级与渐进增强](#优雅降级与渐进增强)
 - [Ajax写法](#ajax写法)
 - [js异步与延迟加载](#js异步与延迟加载)
+- [移动端触摸事件](#移动端触摸事件)
+  - [四种touch事件](#四种touch事件)
+  - [event对象参数](#event对象参数)
+  - [注意](#注意)
+- [移动端点击延迟](#移动端点击延迟)
+  - [解决方案](#解决方案)
+- [各种前端异常的捕获方式](#各种前端异常的捕获方式)
 
 <!-- /TOC -->
 
@@ -210,3 +217,85 @@ script标签中设置`async`，只对外部文件有效，告诉浏览器立即�
 
 IntersectionObserver
 resizeobserver
+
+## 移动端触摸事件
+### 四种touch事件
+* touchstart // 手指放到屏幕上触发
+* touchmove // 手指在屏幕上滑动时触发
+* touchend // 手指离开屏幕时触发
+* touchcancel // 系统取消touch事件时触发
+
+### event对象参数
+* touches // 屏幕上所有手指的列表
+* targetTouches // 当前dom元素上手指的列表
+* changedTouches // 涉及当前事件的手指列表
+touches中包含如下信息：
+* clientX/clientY // 触摸点相对于浏览器窗口的位置
+* pageX/pageY // 触摸点相对于页面的位置
+* screenX/screenY // 触摸点相对于屏幕位置
+* target // 当前DOM元素
+
+### 注意
+手指在滑动整个屏幕时，会影响浏览器的行为，在调用touch事件时，要禁止缩放和滚动。
+**2016年之后的浏览器基本设置过viewport就不会有300ms问题**
+1. 禁止缩放
+```
+<meta name="viewport" content="user-scalable=no">
+```
+2. 禁止滚动
+```
+event.preventDefault();
+```
+
+## 移动端点击延迟
+由于`双击缩放方案`移动端对于点击事件(click回调)会有300ms的延迟
+
+### 解决方案
+* 禁止缩放：大部分移动端可以解决延迟问题，但部分苹果手机不行。
+* 自己封装函数：计算触摸开始到结束的时间,如果小于150ms,就执行回调函数,反之,如果大于150ms,或者期间移动了屏幕,就表示不是点击事件,就不必执行回调函数
+```js
+```
+* fastclick.js： 
+```js
+FastClick.attach(document.body);
+```
+在检测到touchend事件时，立即触发一个模拟click，并将300ms后真正的click阻止掉，。
+* 指针事件（pointer event）
+
+## 各种前端异常的捕获方式
+* js执行错误
+```js
+aler("hello") // alert 被写成了 aler
+```
+使用`window.onerror`来捕获。对于setTimeout/setInterval，用新函数的try/catch包裹，有错误直接抛出
+可捕获message/url/line/colume/other{stack/name}信息
+* 资源加载错误
+```js
+<img src="test.jpg"> // 并不存在该图片，返回了404
+```
+使用`window.addEventListener('error')`捕获，在回调中对event.target进行筛选：
+```js
+// 筛选出js/css/image资源加载失败
+let isElementTarget = target instanceof HTMLScriptElement || target instanceof HTMLLinkElement || target instanceof HTMLImageElement;
+if (!isElementTarget) return false;
+```
+可捕获tagName/src/href信息
+* http请求错误
+```js
+// 登陆账户时密码错误，因此会报403错误。
+var xhr = new XMLHttpRequest()
+xhr.open('POST', 'https://api.domain.com/login')
+xhr.setRequestHeader('Content-Type', 'application/json')
+xhr.send(JSON.stringify({
+    email: 'help@domain.com',
+    password: 'akhakfnak'
+}))
+```
+对于xhr对象`xhr.addEventListener('error')`
+可捕获error.target._requestUrl/status信息
+* 未处理的promise
+```js
+Promise.reject("hello") // 该 reject 未被 catch。
+```
+通过`window.addEventListener('unhandledrejection')`来捕获。
+可以得到error.reason信息。

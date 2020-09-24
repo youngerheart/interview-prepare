@@ -32,6 +32,7 @@
 - [垃圾回收机制](#垃圾回收机制)
   - [WeakMap](#weakmap)
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
+- [try...catch能捕哪些异常](#trycatch能捕哪些异常)
 
 <!-- /TOC -->
 
@@ -357,7 +358,7 @@ map.get(key) // value
 ## 什么操作会导致内存泄漏
 应用程序分配某段内存后，由于设计错误，导致释放该内存之前就失去了对该内存的控制，导致内存浪费。
 ### 意外的全局变量
-* js对为声明的变量会在全局最高对象上创建对它的引用，该变量缓存大量数据，则只会在页面刷新或被关闭时释放内存。
+* js对未声明的变量会在全局最高对象上创建对它的引用，该变量缓存大量数据，则只会在页面刷新或被关闭时释放内存。
 * 直接调用一个全局函数，其this的指向也是全局对象。
 ### console.log
 代码运行后需要在开发工具查看对象信息，所以console.log的对象也不能被垃圾回收。
@@ -470,3 +471,18 @@ if (clusterWorkerSize > 1) {
   })
 }
 ```
+
+## try...catch能捕哪些异常
+**在报错的时候，线程的执行已经进入了try...catch代码块，且处在try...catch中才可以被捕获到**
+* 代码语法异常，在代码解释阶段就报错了，还未进入代码块，捕获不到异常。
+```js
+try {
+  a(
+} catch (e) {
+  console.log('error', e)
+}
+// Uncaught SyntaxError: Unexpected token }
+```
+* 函数声明在try...catch中，在外界执行，由于try...catch已经执行完毕，无法捕捉异常
+* 函数声明在try...catch外，在内部执行，可以捕捉异常
+* try内部执行promise，无法捕捉到异常，因为promise的异常是由reject和catch函数来捕获的。

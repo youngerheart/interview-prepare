@@ -44,7 +44,20 @@
 
 ## 组件与router中name的作用？
 * 当项目使用keep-alive时，可搭配name进行缓存过滤`<keep-alive exclude="Home"></keep-alive>`
-* 组件模板调用自身
+* 组件自己的模板递归调用自身
+```js
+<template>
+  <div>
+    ...
+    <detail-list/>
+  </div>
+</template>
+<script>
+ export default {
+   name: 'DetailList'
+ }
+</script>
+```
 
 * 通过name属性，为一个页面中不同的router-view渲染不同的组件
 ```html
@@ -102,6 +115,7 @@ v-model只能有一个，.sync可以修饰多个属性。
 定义：虚拟DOM的产物，在vue中叫做patch，核心实现来自snabbdom，通过新旧虚拟DOM对比，将变化的地方转为为DOM操作。
 必要性：在Vue1中每个dep都有专门的watch负责更新，项目规模变大就会成为性能瓶颈。vue2优化为一个组件只有一个watcher，即需要patch精确找出发生变化的地方。
 在何处调用：数据发生变化时触发渲染作为watcher的getter函数的updateComponent函数中的vm._update(vm._render())，执行render函数得到新的newVNode，之后执行patch比对之前的oldVNode。
+
 ### 如何运作
 * 不是相同节点: isSameNode为false则销毁旧的vnode渲染新的vnode（即diff为同层对比）
 * 是相同节点： 调用patchVNode方法。如果新vnode是文字，则直接替换，否则对children进行对比
@@ -123,6 +137,7 @@ function sameVnode (a, b) {
 ```
 ### 为什么不要以index作为v-for的key
 如果对数组进行reverse操作，生成的`newChildren`中的props会倒置，但是key的顺序不变，被判断为相同节点，需要进行patchVNode导致优化失效。
+删除除末尾的其他项也会导致同样的问题。
 
 ## 跨组件通信
 ### 父子组件通信
@@ -169,7 +184,7 @@ export const EventBus = new Vue()
 // A.vue
 EventBus.$emit('event', 'data');
 // B.vue
-EventBus.$on("event", (data) => console.log(data))
+EventBus.$on('event', (data) => console.log(data))
 // remove event
 EventBus.$off('event')
 ```
