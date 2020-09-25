@@ -46,6 +46,10 @@
   - [TCP](#tcp)
   - [UDP](#udp)
 - [http1.0/1.1/2.0/https](#http101120https)
+- [webp](#webp)
+  - [原理](#原理)
+  - [兼容性](#兼容性)
+  - [应用](#应用)
 
 <!-- /TOC -->
 
@@ -77,6 +81,10 @@
 
 ### 浏览器相关
 7. 文档解析与DOM加载
+  1. 浏览器解析html源码，创建一个DOM树（完全和html标签对应）。并行请求css/images/js。
+  2. 浏览器按优先级解析css代码，计算出样式数据，构建CSSOM树，忽略掉语法错误的部分。
+  3. DOM Tree + CSSOM => rendering tree，这棵树会忽略掉不需要渲染的元素，如header, display:none的元素。每个节点都储存了css属性。
+  4. 创建好rendering tree后绘制页面。DOM或CSSOM被修改都会导致上述步骤被重复执行。
 
 ## TCP报文/握挥手
 TCP header中包含有
@@ -462,3 +470,21 @@ JWT(JSON Web Token) 是一个开放标准(RFC 7519)，通过数字签名将JSON�
 * 1.0: 每次连接无法复用，一个请求因为服务器正忙导致后面的请求被阻塞
 * 1.1: 默认增加connection: Keep-Alive头保证TCP的长连接可复用。增加了请求头与响应头的分别，更多的缓存头: cache-control/ETag~if-not-matched/Last-Modified~If-Modified-Since
 * 2.0: 多路复用: 通过单连接发起多重请求/响应。将通信单位缩小为帧。首部压缩。服务端推送。
+
+## webp
+### 原理
+对图片进行分块，对待填充的宏块使用帧间隔预测技术，编码预测值和原值的差值，减少了体积，使用了更优秀的编码。
+### 兼容性
+最新版(2020)safari/safari mobile与绝大部分其他浏览器`80.9%`
+### 应用
+* 首先使用`"data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA"`对img.src赋值，如果ima.onerror则不支持。
+* 在Nginx的http模块开启webp(google开发的PageSpeed模块)
+```
+pagespeed on;
+pagespeed FileCachePath "/var/cache/ngx_pagespeed/";
+```
+* 在主机配置增加代码
+```
+pagespeed EnableFilters convert_png_to_jpeg,convert_jpeg_to_webp;
+```
+则nginx会帮助更改源码，在Chrome下返回转换后的webp

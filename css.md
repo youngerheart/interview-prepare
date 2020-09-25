@@ -34,16 +34,21 @@
   - [@font-face](#font-face)
   - [各种效果](#各种效果)
 - [BFC的概念](#bfc的概念)
+  - [触发条件](#触发条件)
+  - [margin重合问题](#margin重合问题)
 - [CSS Sprites](#css-sprites)
 - [对语义化的理解？](#对语义化的理解)
 - [清除浮动](#清除浮动)
-- [rem, rm, vw/vh](#rem-rm-vwvh)
+- [rem, rm, vw/vh, px](#rem-rm-vwvh-px)
+  - [画一条0.5px的线?](#画一条05px的线)
 - [回流与重绘](#回流与重绘)
   - [如何减少](#如何减少)
 - [伪类和伪元素的区别](#伪类和伪元素的区别)
   - [伪类](#伪类)
   - [伪元素](#伪元素)
 - [clac/@support/@media的含义和用法](#clacsupportmedia的含义和用法)
+- [垂直居中的方法(至少四种)](#垂直居中的方法至少四种)
+- [label标签的作用](#label标签的作用)
 
 <!-- /TOC -->
 
@@ -278,9 +283,20 @@ animation: ani 2s ease 0s;
     }
 }
 ```
+
 ## BFC的概念
 Block Formatting Context 是布局过程中生成块级盒子的区域。
 BFC是一个独立的布局环境，BFC中的元素布局不受外部影响。浮动元素会创建BFC，所以两个浮动元素的布局互相不影响。
+
+### 触发条件
+* 根元素
+* position: absolute/fixed
+* display: inline-block / table
+* float
+
+### margin重合问题
+* 块级盒子的垂直相邻边界会重合。最终边界宽度是两者最大值。可做透明border解决。
+* 子元素的margin-top会传递给父元素(border共享)，可以通过给父元素`overflow: hidden`解决(对于body无效，body只可以做padding-top或border)
 
 ## CSS Sprites
 将一些背景图片整合到一张图片文件中，再利用CSS的`background-image/repeat/position`进行定位，减少图片文件开销。
@@ -295,10 +311,17 @@ BFC是一个独立的布局环境，BFC中的元素布局不受外部影响。�
 * 使用空标签/:after `clear:both` 清除浮动
 * 给父元素设置overflow: auto/hidden
 
-## rem, rm, vw/vh
+## rem, rm, vw/vh, px
 * rem用作非根元素时，为相对于**根元素**字体大小的比例，用于根元素字体大小时，为相对于**初始**字体大小的比例。
 * em作为font-size的单位时，为相对于**父元素**字体大小的比例，用作其他属性时，为相对于**自身**字体大小的比例。
 * vw/vh 相对于浏览器宽高的1/100
+* px 相对于显示器而言的像素
+
+### 画一条0.5px的线?
+```css
+height: 1px;
+transform: scale(0.5);
+```
 
 ## 回流与重绘
 页面加载时，浏览器会把获取到的HTML代码解析成一个DOM树，将样式解析为样式结构体，组合后构建渲染render tree
@@ -349,3 +372,13 @@ console.log(beforeStyle.width); // 100px
   }
 }
 ```
+
+## 垂直居中的方法(至少四种)
+* line-height与height相同
+* position: absolete;top: 50%;transform: translateY(-50%)
+* display: flex;align-items: center
+* display: table(父)table-cell(子); vertical-align: middle // table中子项高度默认撑满
+
+## label标签的作用
+
+* `<label for="关联控件的id" form="所属表单id列表">文本内容</label>`
