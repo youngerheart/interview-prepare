@@ -122,51 +122,6 @@ let search = function(nums,target) {
 }
  ```
 
-## 动态规划
-
-### 爬楼梯
-假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
-
-每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
-
-注意：给定 n 是一个正整数。
-
-```js
-/**
- * @param {number} n
- * @return {number}
- */
-var climbStairs = function(n) {
-  // 经典递归算法，首先确定边界
-  if (n === 1) return 1;
-  if (n === 2) return 2;
-  // 爬到n阶楼梯的方案数等于爬到n-1和爬到n-2阶方案数之和
-  return climbStairs(n - 1) + climbStairs(n - 2)
-};
-```
-### 变态爬楼梯
-```js
-// f(1) = 1
-// f(2) = f(1) + 1
-// f(3) = f(2) + f(1) + 1
-// f(4) = f(3) + f(2) + f(1) + 1
-// f(5) = f(4) + f(3) + f(2) + f(1) + 1
-/**
- * @param {number} n
- * @return {number}
- */
-let cache = [0, 1, 2]
-var crazyClimbStairs = function(n) {
-  cache[n] = 1 // 初始值总是为1
-  for (let i = n - 1; i >= 1; i--) {
-    cache[n] += crazyClimbStairs(i)
-  }
-  return cache[n]
-};
-console.log(crazyClimbStairs(10));
-console.log(cache);
-```
-
 ### 对称数
 * 各位数字左右对称
 ```js

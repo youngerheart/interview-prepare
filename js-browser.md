@@ -267,8 +267,15 @@ FastClick.attach(document.body);
 ```js
 aler("hello") // alert 被写成了 aler
 ```
-使用`window.onerror`来捕获。对于setTimeout/setInterval，用新函数的try/catch包裹，有错误直接抛出
+使用`window.onerror`来捕获。
+**跨域脚本，为了防止信息泄露，不会展示语法错误具体信息，只会展示 Script error.**
+可以先解决跨域：
+* 客户端script标签添加 crossorigin="anonymous"
+* 服务端响应header添加 Access-Control-Allow-Origin: *
+
+对于setTimeout/setInterval，用新函数的try/catch包裹，有错误直接抛出
 可捕获message/url/line/colume/other{stack/name}信息
+
 * 资源加载错误
 ```js
 <img src="test.jpg"> // 并不存在该图片，返回了404

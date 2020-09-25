@@ -3,7 +3,6 @@ const http = require('http');
 class Koa {
   constructor () {
     this.middleWareList = []
-    this.composeFn = compose(this.middleWareList)
   }
 
   use (fn) {
@@ -12,9 +11,10 @@ class Koa {
   }
 
   listen(...args) {
+    const composeFn = compose(this.middleWareList)
     const server = http.createServer((req,res) => {
       const ctx = createContext(req, res)
-      this.composeFn(ctx)
+      composeFn(ctx)
       res.write("hello nodejs");
       res.end();
     })
@@ -35,7 +35,7 @@ function compose(middleWareList) {
         // 保证函数执行的结果必须是 Promise 类型
         return Promise.resolve(
           //通过i+1获取下一个中间件
-          fn(ctx, dispatch.bind(null, i + 1))
+          fn(ctx, dispatch.bind(null, i + 1)) // 这是一个promise，Promise.resolve会执行完它
         )
       } catch(err) {
         return Promise.reject(err)

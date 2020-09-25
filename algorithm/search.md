@@ -83,14 +83,17 @@ function FibonacciSearch(array, value) {
   }
 
   while (start <= end) {
+    // f[i] = f[i - 1] + f[i - 2]
+    // 赋值
     index = start + f[k - 1] - 1
     if (value < array[index]) {
       end = index - 1
-      k = k - 1
+      k = k - 1 // 失去左侧
     } else if (value > array[index]) {
       start = index + 1;
-      k = k - 2
+      k = k - 2 // 失去右侧
     } else {
+      // 命中
       if (index <= indexNum) return index
       return indexNum
     }

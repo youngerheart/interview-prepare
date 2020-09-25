@@ -9,6 +9,8 @@
   - [创建二叉树](#创建二叉树)
   - [遍历二叉树](#遍历二叉树)
   - [字典树](#字典树)
+  - [爬楼梯](#爬楼梯)
+  - [变态爬楼梯](#变态爬楼梯)
 
 <!-- /TOC -->
 ## 基础
@@ -26,13 +28,22 @@ function deepCopy(obj) {
 ```
 3. 遍历
 ```js
-function clone(obj) {
-  var buf;
-  if (obj instanceof Array) {
-    buf = [];
-    obj.forEach((item, index) => buf[index] = clone(item));
-    return buf;
-  } else if (Object.prototype.toString.call(obj) === '[object Object]') {}
+function deepClone(obj) {
+  //判断拷贝的要进行深拷贝的是数组还是对象，是数组的话进行数组拷贝，对象的话进行对象拷贝
+  var objClone = Array.isArray(obj) ? [] : {};
+  //进行深拷贝的不能为空，并且是对象或者是
+  if (obj && typeof obj === "object") {
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        if (obj[key] && typeof obj[key] === "object") {
+          objClone[key] = deepClone(obj[key]);
+        } else {
+          objClone[key] = obj[key];
+        }
+      }
+    }
+  }
+  return objClone;
 }
 ```
 
@@ -179,4 +190,47 @@ function insert(root, str) {
 let root = new TrieNode('');
 ['and', 'about', 'as', 'boy', 'by', 'because', 'as'].forEach(str => insert(root, str))
 console.log(root)
+```
+
+### 爬楼梯
+假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
+
+每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+注意：给定 n 是一个正整数。
+
+```js
+/**
+ * @param {number} n
+ * @return {number}
+ */
+var climbStairs = function(n) {
+  // 经典递归算法，首先确定边界
+  if (n === 1) return 1;
+  if (n === 2) return 2;
+  // 爬到n阶楼梯的方案数等于爬到n-1和爬到n-2阶方案数之和
+  return climbStairs(n - 1) + climbStairs(n - 2)
+};
+```
+### 变态爬楼梯
+```js
+// f(1) = 1
+// f(2) = f(1) + 1
+// f(3) = f(2) + f(1) + 1
+// f(4) = f(3) + f(2) + f(1) + 1
+// f(5) = f(4) + f(3) + f(2) + f(1) + 1
+/**
+ * @param {number} n
+ * @return {number}
+ */
+let cache = [0, 1, 2]
+var crazyClimbStairs = function(n) {
+  cache[n] = 1 // 初始值总是为1
+  for (let i = n - 1; i >= 1; i--) {
+    cache[n] += crazyClimbStairs(i)
+  }
+  return cache[n]
+};
+console.log(crazyClimbStairs(10));
+console.log(cache);
 ```

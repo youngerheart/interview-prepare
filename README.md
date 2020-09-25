@@ -2,7 +2,7 @@
 
 * [算法](./algorithm.md)
 * [CSS](./css.md)
-* [HTTP相关](./http.md)
+* [网络相关](./network.md)
 * [浏览器相关JS](./js-browser.md)
 * [语法相关JS](./js-grammar.md)
 * [操作系统](./operate.md)

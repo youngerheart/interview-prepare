@@ -33,6 +33,9 @@
   - [WeakMap](#weakmap)
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
 - [try...catch能捕哪些异常](#trycatch能捕哪些异常)
+- [大数相加](#大数相加)
+- [proxy与object.defineproperty](#proxy与objectdefineproperty)
+- [call/apply/bind](#callapplybind)
 
 <!-- /TOC -->
 
@@ -486,3 +489,27 @@ try {
 * 函数声明在try...catch中，在外界执行，由于try...catch已经执行完毕，无法捕捉异常
 * 函数声明在try...catch外，在内部执行，可以捕捉异常
 * try内部执行promise，无法捕捉到异常，因为promise的异常是由reject和catch函数来捕获的。
+
+## 大数相加
+* js的Number是标准64-bits双精度数值
+```
+符号位(1)指数位(11)数字位(52)
+```
+在2^53 - 1内精确否则出现精度丢失
+* 需要使用字符串逐位计算
+
+## proxy与object.defineproperty
+
+object.defineproperty
+* 不能监听数组的变化，对于数组方法无法触发set
+* 必须深层遍历对象的每个属性
+
+proxy
+针对对象：针对整个对象，不是某个属性，所有key都可以走进set
+支持数组：不需要对方法重载
+嵌套：get中递归调用Proxy并返回
+可以配合Reflect.get 和 Reflect.set使用。
+
+## call/apply/bind
+**哭了，居然遇到这个，还紧张的答不上来？**
+主体均为function，前两者分别传入上下文和逐个参数/参数数组，后者只接受上下文对象并返回新函数

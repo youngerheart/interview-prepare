@@ -190,7 +190,7 @@ EventBus.$off('event')
 ```
 
 ### 跨层级关系
-* provide / inject
+* provide / inject (提供/添加)
 * $root
 * eventbus
 * vuex

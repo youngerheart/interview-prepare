@@ -43,6 +43,7 @@
 - [伪类和伪元素的区别](#伪类和伪元素的区别)
   - [伪类](#伪类)
   - [伪元素](#伪元素)
+- [clac/@support/@media的含义和用法](#clacsupportmedia的含义和用法)
 
 <!-- /TOC -->
 
@@ -330,4 +331,21 @@ BFC是一个独立的布局环境，BFC中的元素布局不受外部影响。�
 var myIdElement = document.getElementById("myId");
 var beforeStyle = window.getComputedStyle(myIdElement, ":before");
 console.log(beforeStyle.width); // 100px
+```
+
+## clac/@support/@media的含义和用法
+* 动态计算数值：`width: clac(50%-20px)`
+* 检测浏览器是否支持某个css的属性：
+```js
+@supports (display: flex) not/and/or ( box-shadow: 2px 2px 2px black ) {
+  /*自己的样式*/
+}
+```
+* 针对不同的媒体设备定义不同的样式
+```css
+@media screen and (max-width: 300px) {
+  body {
+    background-color: #000
+  }
+}
 ```
