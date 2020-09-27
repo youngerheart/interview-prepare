@@ -1,5 +1,10 @@
 <!-- TOC -->
 
+- [js数据类型](#js数据类型)
+  - [原始数据类型(值类型)](#原始数据类型值类型)
+  - [对象数据类型(引用类型)](#对象数据类型引用类型)
+  - [包装引用类型](#包装引用类型)
+  - [js数据在内存中的存储位置](#js数据在内存中的存储位置)
 - [创建对象四种方式](#创建对象四种方式)
 - [原型与原型链](#原型与原型链)
 - [继承的六种方法](#继承的六种方法)
@@ -23,12 +28,13 @@
 - [什么操作会导致内存泄漏](#什么操作会导致内存泄漏)
   - [意外的全局变量](#意外的全局变量)
   - [console.log](#consolelog)
-  - [闭包](#闭包)
+  - [几种闭包](#几种闭包)
   - [DOM泄漏](#dom泄漏)
   - [timers](#timers)
 - [判断浏览器还是NodeJS环境？](#判断浏览器还是nodejs环境)
 - [NodeJS优缺点](#nodejs优缺点)
 - [event loop，Nodejs与浏览器区别](#event-loopnodejs与浏览器区别)
+  - [宏任务/微任务](#宏任务微任务)
 - [垃圾回收机制](#垃圾回收机制)
   - [WeakMap](#weakmap)
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
@@ -36,8 +42,34 @@
 - [大数相加](#大数相加)
 - [proxy与object.defineproperty](#proxy与objectdefineproperty)
 - [call/apply/bind](#callapplybind)
+- [js对象的深度克隆](#js对象的深度克隆)
 
 <!-- /TOC -->
+
+## js数据类型
+### 原始数据类型(值类型)
+* null 空，代表一个空指针，转换为数字为0
+* undefined 未定义，变量声明了但未赋值。转换为数字为NaN
+* boolean 布尔类型，用于判断
+* string 字符串
+* number 数值
+* symbol(ES6)
+
+### 对象数据类型(引用类型)
+Object/Array/Date/Function/RegExp
+
+### 包装引用类型
+本身是基本类型，但在代码的执行过程中，调用了属性和方法，JS引擎会自动对其进行包装，对其包装引用类型的变量调用属性或方法。
+
+### js数据在内存中的存储位置
+**栈：保存原始数据类型**
+* 储存的值大小固定，空间较小（由系统分配），运行效率高。
+```js
+var name = 'aa';
+name += 'bb';　//重新分配了一块空间存储aabb，并将name指向新值。（并没有改变原来name空间的值）
+```
+**堆：储存引用类型数据**
+* 大小可动态调整，空间较大(通过代码分配)，无法直接操作，使用引用地址读取。
 
 ## 创建对象四种方式
 1. 构造函数/自定义构造函数: `var obj = new Obj()`
@@ -365,7 +397,8 @@ map.get(key) // value
 * 直接调用一个全局函数，其this的指向也是全局对象。
 ### console.log
 代码运行后需要在开发工具查看对象信息，所以console.log的对象也不能被垃圾回收。
-### 闭包
+### 几种闭包
+* 普通用法
 ```js
 function Sum() {
   var i = 99;
@@ -378,7 +411,16 @@ function Sum() {
 var sum = Sum();
 test(); // 100
 ```
-这里的tool函数无法被回收，因为被全局对象tool引用。想要释放内存可以设置tool = null。
+这里的tool函数无法被回收，因为被全局对象sum引用。想要释放内存可以设置tool = null。
+
+* 结合this实现
+```js
+let Circle = {}
+Circle.PI = 3.1415926
+Circle.Area = function(r) {
+  return (this.PI * r * r).toFixed(2)
+}
+```
 
 ### DOM泄漏
 如果某个变量保存了对DOM的引用，该元素在页面上被删除后对它的引用依然在变量中，造成内存泄漏，需要将其设置为null
@@ -417,6 +459,44 @@ CPU运算密集型会造成阻塞，无法利用多核，单线程异常会使�
 宏任务（macrotask）setImmediate > MessageChannel > setTimeout / setInterval
   浏览器: DOM event>network IO>UI render
 微任务（microtask）process.nextTick > Promise = MutationObserver
+
+### 宏任务/微任务
+```js
+
+async function async1() {
+	console.log('async1 start'); // 同步执行
+	await async2();
+	console.log('asnyc1 end');
+}
+async function async2() {
+	console.log('async2');
+}
+console.log('script start');
+setTimeout(() => {
+	console.log('setTimeOut');
+}, 0);
+async1();
+new Promise(function (reslove) {
+	console.log('promise1'); // 同步执行
+	reslove();
+}).then(function () {
+	console.log('promise2');
+})
+
+console.log('script end');
+
+/*
+script start
+async1 start
+async2
+promise1
+script end
+asnyc1 end
+promise2
+setTimeOut
+*/
+```
+
 
 **在node11版本中，node下的event loop已经与浏览器趋于相同**
 
@@ -513,3 +593,36 @@ proxy
 ## call/apply/bind
 **哭了，居然遇到这个，还紧张的答不上来？**
 主体均为function，前两者分别传入上下文和逐个参数/参数数组，后者只接受上下文对象并返回新函数
+
+## js对象的深度克隆
+1. 可以通过`JSON.stringify/JSON.parse`实现，不能拷贝正则表达式类型/函数类型/循环使用对象/undefined
+2. 使用MessageChannel（异步），不能拷贝函数
+```js
+function deepCopy(obj) {
+  return new Promise((resolve) => {
+    const { port1, port2 } = new MessageChannel();
+    port2.onmessage = event => resolve(event.data);
+    port1.postMessage(obj);
+  });
+}
+```
+3. 遍历
+```js
+function deepClone(obj) {
+  //判断拷贝的要进行深拷贝的是数组还是对象，是数组的话进行数组拷贝，对象的话进行对象拷贝
+  var objClone = Array.isArray(obj) ? [] : {};
+  //进行深拷贝的不能为空，并且是对象或者是
+  if (obj && typeof obj === "object") {
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        if (obj[key] && typeof obj[key] === "object") {
+          objClone[key] = deepClone(obj[key]);
+        } else {
+          objClone[key] = obj[key];
+        }
+      }
+    }
+  }
+  return objClone;
+}
+```

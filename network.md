@@ -5,6 +5,8 @@
   - [缓存相关](#缓存相关)
   - [网络相关](#网络相关)
   - [浏览器相关](#浏览器相关)
+- [DNS中为何域名解析用UDP，区域复制用TCP](#dns中为何域名解析用udp区域复制用tcp)
+- [计算机网络体系](#计算机网络体系)
 - [TCP报文/握挥手](#tcp报文握挥手)
   - [握手](#握手)
   - [挥手](#挥手)
@@ -50,6 +52,9 @@
   - [原理](#原理)
   - [兼容性](#兼容性)
   - [应用](#应用)
+- [PWA(Progressive Web Apps)渐进式增强web应用](#pwaprogressive-web-apps渐进式增强web应用)
+  - [兼容性](#兼容性-1)
+  - [使用](#使用)
 
 <!-- /TOC -->
 
@@ -72,6 +77,7 @@
 
 ### 网络相关
 4. DNS(Domain Name System): 通过域名查询IP(使用UDP)
+浏览器调用系统库的gethostbyname函数，系统通过网卡给DNS发送UDP请求。
 如果主机查询的本地域名服务器不知道被查询的域名IP
 递归查询>迭代查询
 递归查询：向根域名服务器继续发出查询请求，根域名请求顶级域名，顶级请求权限域名...直到返回该域名IP
@@ -85,6 +91,18 @@
   2. 浏览器按优先级解析css代码，计算出样式数据，构建CSSOM树，忽略掉语法错误的部分。
   3. DOM Tree + CSSOM => rendering tree，这棵树会忽略掉不需要渲染的元素，如header, display:none的元素。每个节点都储存了css属性。
   4. 创建好rendering tree后绘制页面。DOM或CSSOM被修改都会导致上述步骤被重复执行。
+
+## DNS中为何域名解析用UDP，区域复制用TCP
+* UDP快，只需要请求和应答，但UDP传输内容不能超过512字节，符合DNS的应用场景。
+* 辅助DNS服务器从主服务器复制大量DNS数据，超过512字节，且要求传输可靠性。
+
+## 计算机网络体系
+OSI体系分为七层，TCP/IP为五层协议
+应用/表示/回话->应用(FTP/SMTP)
+运输->运输(TCP/UDP)
+网络->网络(IP)
+数据链路层
+物理层
 
 ## TCP报文/握挥手
 TCP header中包含有
@@ -488,3 +506,71 @@ pagespeed FileCachePath "/var/cache/ngx_pagespeed/";
 pagespeed EnableFilters convert_png_to_jpeg,convert_jpeg_to_webp;
 ```
 则nginx会帮助更改源码，在Chrome下返回转换后的webp
+
+## PWA(Progressive Web Apps)渐进式增强web应用
+谷歌以Service Worker API为核心实现的web应用。
+### 兼容性
+* 除老版safari和IE的94%的浏览器
+### 使用
+* 使用HTTPS访问，SSL设置正确
+* 注册：在网站页面上注册实现ServerWorker功能逻辑的脚本
+```js
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('/sw/sw.js', {scope: '/'}) // 通过scope设置作用域范围
+    .then(registration => console.log('ServiceWorker 注册成功！作用域为: ', registration.scope))
+    .catch(err => console.log('ServiceWorker 注册失败: ', err));
+}
+```
+* 安装：在`sw.js`中实现
+```js
+// 用于标注创建的缓存，也可以根据它来建立版本规范
+const CACHE_NAME = 'younger_cache_v1.0.0';
+// 列举要默认缓存的静态资源，一般用于离线使用
+const urlsToCache = [
+  'https://www.a.com/offline.html',
+  'https://www.a.com/offline.png'
+];
+ 
+// this 为当前 scope 内的上下文
+this.addEventListener('install', event => {
+  // event.waitUtil 用于在安装成功之前执行一些预装逻辑
+  // 但是建议只做一些轻量级和非常重要资源的缓存，减少安装失败的概率
+  // 失败后会变为redundant状态
+  // 安装成功后 ServiceWorker 状态会从 installing 变为 installed
+  event.waitUntil(
+    // 使用 cache API 打开指定的 cache 文件
+    caches.open(CACHE_NAME).then(cache => {
+      console.log(cache);
+      // 添加要缓存的资源列表
+      this.skipWaiting();
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+```
+* 如果希望强制更新ServiceWorker，可以在install中使用this.skipWaiting方法，直接进入active阶段，再通过全局的clients.claim()更新。
+* 当浏览器发起请求时，会触发fetch事件，拦截到当前作用域所有的http/https请求，给出自己的响应。
+```js
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+    .then(hit => {
+      // 返回缓存中命中的文件
+      if (hit) {
+        return hit;
+      }
+
+      const fetchRequest = event.request.clone();
+
+      if (navigator.online) {
+        // 如果为联网状态
+        return onlineRequest(fetchRequest);
+      } else {
+        // 如果为离线状态
+        return offlineRequest(fetchRequest);
+      }
+    })
+  );
+});
+```

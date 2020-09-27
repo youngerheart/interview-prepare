@@ -1,7 +1,9 @@
 <!-- TOC -->
 
 - [基础](#基础)
-  - [js对象的深度克隆](#js对象的深度克隆)
+  - [时间复杂度](#时间复杂度)
+  - [空间复杂度](#空间复杂度)
+  - [烧香问题](#烧香问题)
   - [++i 与 i++](#i-与-i)
   - [重建二叉树](#重建二叉树)
   - [两个栈实现队列](#两个栈实现队列)
@@ -14,38 +16,18 @@
 
 <!-- /TOC -->
 ## 基础
-### js对象的深度克隆
-1. 可以通过`JSON.stringify/JSON.parse`实现，不能拷贝正则表达式类型/函数类型/循环使用对象/undefined
-2. 使用MessageChannel（异步），不能拷贝函数
-```js
-function deepCopy(obj) {
-  return new Promise((resolve) => {
-    const { port1, port2 } = new MessageChannel();
-    port2.onmessage = event => resolve(event.data);
-    port1.postMessage(obj);
-  });
-}
-```
-3. 遍历
-```js
-function deepClone(obj) {
-  //判断拷贝的要进行深拷贝的是数组还是对象，是数组的话进行数组拷贝，对象的话进行对象拷贝
-  var objClone = Array.isArray(obj) ? [] : {};
-  //进行深拷贝的不能为空，并且是对象或者是
-  if (obj && typeof obj === "object") {
-    for (key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        if (obj[key] && typeof obj[key] === "object") {
-          objClone[key] = deepClone(obj[key]);
-        } else {
-          objClone[key] = obj[key];
-        }
-      }
-    }
-  }
-  return objClone;
-}
-```
+### 时间复杂度
+* O(1) 无循环
+* O(n) 单循环，执行n遍
+* O(logN) `while(i < n) i = i * 2`
+* O(n^2) 循环嵌套
+### 空间复杂度
+* O(1) 临时空间不随着某个变量n的大小而变化
+* O(n) var a = new Array(n) // 分配了新空间
+
+### 烧香问题
+* 有两根不均匀的香,一整根烧完用一小时,怎么用这两个香计算出十五分钟?
+把两根香同时点起来,第一支香两头点着,另一支香只烧一头,等第一支香烧完的同时（这是烧完总长度的3/4）,把第二支香另一头点燃,另一头从燃起到熄灭的时间就是15分!
 
 ### ++i 与 i++
 * 先自增后计算 & 先计算后自增
