@@ -23,10 +23,13 @@
 - [移动端触摸事件](#移动端触摸事件)
   - [四种touch事件](#四种touch事件)
   - [event对象参数](#event对象参数)
-  - [注意](#注意)
+  - [点击事件300ms延迟问题](#点击事件300ms延迟问题)
+- [Viewport](#viewport)
 - [移动端点击延迟](#移动端点击延迟)
   - [解决方案](#解决方案)
 - [各种前端异常的捕获方式](#各种前端异常的捕获方式)
+- [获取dom对象的样式值](#获取dom对象的样式值)
+- [在父级捕获停止冒泡的子元素事件？](#在父级捕获停止冒泡的子元素事件)
 
 <!-- /TOC -->
 
@@ -235,8 +238,9 @@ touches中包含如下信息：
 * screenX/screenY // 触摸点相对于屏幕位置
 * target // 当前DOM元素
 
-### 注意
-手指在滑动整个屏幕时，会影响浏览器的行为，在调用touch事件时，要禁止缩放和滚动。
+注意手指在滑动整个屏幕时，会影响浏览器的行为，在调用touch事件时，要禁止缩放和滚动。
+
+### 点击事件300ms延迟问题
 **2016年之后的浏览器基本设置过viewport就不会有300ms问题**
 1. 禁止缩放
 ```
@@ -246,6 +250,10 @@ touches中包含如下信息：
 ```
 event.preventDefault();
 ```
+
+## Viewport
+手机浏览器是把页面放在一个虚拟的“窗口”（viewport）中，与桌面端页面做区分
+
 
 ## 移动端点击延迟
 由于`双击缩放方案`移动端对于点击事件(click回调)会有300ms的延迟
@@ -306,3 +314,33 @@ Promise.reject("hello") // 该 reject 未被 catch。
 ```
 通过`window.addEventListener('unhandledrejection')`来捕获。
 可以得到error.reason信息。
+
+## 获取dom对象的样式值
+* getBoundingClientRect
+* getComputedStyle
+
+```js
+function getStyle(obj,attr) {
+  if(obj.currentStyle) {
+    return obj.currentStyle[attr];
+  } else {
+    return getComputedStyle(obj, null)[attr];
+  };
+};
+```
+
+## 在父级捕获停止冒泡的子元素事件？
+```js
+addEventListener (type:String, listener:Function, useCapture:Boolean = false) {}
+```
+他们都接受3个参数：要处理的事件名、作为事件处理程序的函数和一个布尔值。最后一个布尔值参数如果是true，表示在`事件捕获阶段`调用事件处理程序；如果是false(默认)，表示在事件冒泡阶段调用事件处理程序。
+```js
+document.querySelector('#duang').addEventListener('click', (e) => {
+  console.log('duang clicked');
+  e.stopPropagation();
+})
+document.body.addEventListener('click', (e) => console.log('use capture', e.target), true);
+// after clicked #duang
+// use capture <p id=​"duang">​...</p>​
+// duang clicked
+```

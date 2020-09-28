@@ -20,6 +20,10 @@
 - [浏览器缓存](#浏览器缓存)
   - [强缓存：浏览器在规定时间内强制使用缓存而不请求服务器](#强缓存浏览器在规定时间内强制使用缓存而不请求服务器)
   - [协商缓存：询问服务器是否需要使用浏览器缓存](#协商缓存询问服务器是否需要使用浏览器缓存)
+- [CSP(Content-Security-Policy)内容安全策略](#cspcontent-security-policy内容安全策略)
+  - [介绍](#介绍)
+  - [用法](#用法)
+  - [限制项](#限制项)
 - [解决跨域的方法](#解决跨域的方法)
   - [Cookie](#cookie)
   - [iframe](#iframe)
@@ -206,6 +210,47 @@ Expries: Wed, 08 Jul 2020 14:57:25 GMT
 浏览器第一次请求资源，服务器返回资源同时在响应头加上Last-Modified的header标识最后修改时间。浏览器再次请求时会在请求头加上If-Modified-Since的header，即上次Last-Modified的值。服务器判断如果资源没有变化则返回304。
 
 **ETag/If-None-Match**
+
+## CSP(Content-Security-Policy)内容安全策略
+### 介绍
+前端有著名的“同源策略”：一个页面资源只能从与之同源的服务器获取，不允许跨域获取。这样可以避免页面被注入恶意代码，影响安全。但也限制了前端灵活性。
+通过csp的实质是白名单只读，开发者明确告诉客户端，哪些外部资源可以加载和执行。实现和执行全部由浏览器完成，开发者只需提供配置。大大增强了网页安全性，攻击者即使发现了漏洞，也没法注入脚本，除非还控制了一台可信主机。
+
+### 用法
+1. 通过HTTP头信息的`Content-Security-Policy`字段。
+```
+Content-Security-Policy: script-src 'self'; object-src 'none';
+style-src cdn.example.org third-party.org; child-src https:
+```
+2. 通过网页的`<meta>`标签
+```html
+<meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; style-src cdn.example.org third-party.org; child-src https:">
+```
+### 限制项
+**资源加载限制**
+* `script-src` 外部脚本
+* `style-src` 样式表
+* `img-src` 图像
+* `media-src` 媒体文件（音视频）
+* `child-src` 框架
+* `object-src` 插件（如flash）
+**全局限制**
+* `default-src` 用来设置上面各个选项的默认值，优先级较低
+**URL限制**
+* `frame-ancestors`：限制嵌入框架的网页
+* `base-uri`：限制base#href(为所有相对url规定基准url)
+* `form-action`：限制form#action（表单请求的url）
+**其他限制**
+* `block-all-mixed-content`：HTTPS 网页不得加载 HTTP 资源（浏览器已经默认开启）
+* `upgrade-insecure-requests`：自动将网页上所有加载外部资源的 HTTP 链接换成 HTTPS 协议
+* `plugin-types` 限制可以使用的插件格式
+**report-uri**
+可以告诉浏览器，应该把注入行为报告给哪个网址
+* `report-uri /my_amazing_csp_report_parser`
+浏览器会使用POST方法，发送一个JSON对象
+```js
+
+```
 
 ## 解决跨域的方法
 不同源的两个页面有三种限制
