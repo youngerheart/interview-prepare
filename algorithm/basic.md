@@ -8,9 +8,11 @@
   - [重建二叉树](#重建二叉树)
   - [两个栈实现队列](#两个栈实现队列)
   - [反转链表](#反转链表)
-  - [创建二叉树](#创建二叉树)
+  - [创建二叉树(层次)](#创建二叉树层次)
+  - [创建二叉树(先序)](#创建二叉树先序)
   - [遍历二叉树](#遍历二叉树)
   - [字典树](#字典树)
+  - [二叉树的深度优先遍历](#二叉树的深度优先遍历)
   - [爬楼梯](#爬楼梯)
   - [变态爬楼梯](#变态爬楼梯)
 
@@ -27,7 +29,7 @@
 
 ### 烧香问题
 * 有两根不均匀的香,一整根烧完用一小时,怎么用这两个香计算出十五分钟?
-把两根香同时点起来,第一支香两头点着,另一支香只烧一头,等第一支香烧完的同时（这是烧完总长度的3/4）,把第二支香另一头点燃,另一头从燃起到熄灭的时间就是15分!
+把两根香同时点起来,第一支香两头点着,另一支香只烧一头,等第一支香烧完的同时（这时烧完总长度的3/4，时间为半小时）,把第二支香另一头点燃,另一头从燃起到熄灭的时间就是15分!
 
 ### ++i 与 i++
 * 先自增后计算 & 先计算后自增
@@ -42,6 +44,7 @@ let i = 0;
 需求: 输入某二叉树的前序和中序遍历的结果，重建该二叉树
 * 前序: 根左右
 * 中序: 左根右
+* 后序: 左右根
 思路:
 1. 找到根节点
 2. 根据找到的根节点和中序序列，找到树的左右子树
@@ -68,7 +71,6 @@ function rebuildTree(frontSort, middleSort) {
     // slice函数需要截取到当前位的话第二个参数+1
     let leftTree = rebuildTree(frontSort.slice(1, index + 1), middleSort.slice(0, index))
     let rightTree = rebuildTree(frontSort.slice(index + 1), middleSort.slice(index + 1))
-    console.log();
     let rootNode = new TreeNode(rootVal)
     rootNode.left = leftTree
     rootNode.right = rightTree
@@ -139,7 +141,76 @@ function reverseList(head){
   return head;
 }
 ```
-### 创建二叉树
+### 创建二叉树(层次)
+1. 找到根节点，将根节点加入到队列（层次遍历结果序列的第一个一定是根节点）
+2. 循环的将队列队首的元素出队，把和出队元素相关的元素加入到队列（循环中的元素为空，循环就运行完了）
+```js
+function TreeNode(val) {
+  this.val = val;
+  this.left = null;
+  this.right = null;
+}
+// 层次遍历
+
+function levelOrder(arr) {
+  let queue = []; // 需要操作的队列
+  let root = null;
+  if (arr[0] !== undefined) {
+    // 找到根节点并创建
+    let nodeVal = arr.shift();
+    root = new TreeNode(nodeVal)
+    queue.push(root)
+    // 队列不为空
+    while (queue.length) {
+      // 将队首元素出队（根节点）
+      let head = queue.shift();
+      // 把和出对元素相关的元素加入到队列（根节点的左右孩子）
+      nodeVal = arr.shift();
+      if(nodeVal && nodeVal!='#'){
+          head.left=new TreeNode(nodeVal);
+          queue.push(head.left);
+      }
+      nodeVal = arr.shift();
+      if(nodeVal && nodeVal != '#'){
+          head.right=new TreeNode(nodeVal);
+          queue.push(head.right);
+      }
+    }
+  }
+  return root;
+}
+let arr = ['a','b','c','d','#','#','e','#','f','#','#','#','#'];
+levelOrder(arr);
+```
+
+### 创建二叉树(先序)
+```js
+function TreeNode(val) {
+  this.val = val;
+  this.left = null;
+  this.right = null;
+}
+
+function preOrder(arr) {
+  // 递归结束条件：叶子节点
+  // 递归的递推表达式：根左右
+  // 递归的返回值：创建好的树或子树
+  let root = null;
+  if (arr[0] !== undefined) {
+    let nodeVal = arr.shift()
+    if (nodeVal && nodeVal !== '#') {
+      // 创建根节点
+      root = new TreeNode(nodeVal)
+      root.left = preOrder(arr)
+      root.right = preOrder(arr)
+    }
+  }
+  return root
+}
+let arr=['a','b','d','#','f','#','#','#','c','#','e','#','#'];
+preOrder(arr)
+```
+
 ### 遍历二叉树
 ### 字典树
 * 定义:一个节点保存一个字符。为了表示一个单词是否出现，可以给最后的字符加上标记。根节点为空。
@@ -173,6 +244,21 @@ let root = new TrieNode('');
 ['and', 'about', 'as', 'boy', 'by', 'because', 'as'].forEach(str => insert(root, str))
 console.log(root)
 ```
+### 二叉树的深度优先遍历
+* 前序
+```js
+preOrder (tree, result) {
+  if (tree) {
+    // 根左右
+    result.push(tree.val);
+    preOrder(tree.left, res);
+    preOrder(tree.right, res);
+  } else {
+    result.push('#')
+  }
+}
+```
+* 中/后续: 左根右，左右根
 
 ### 爬楼梯
 假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
@@ -193,6 +279,16 @@ var climbStairs = function(n) {
   // 爬到n阶楼梯的方案数等于爬到n-1和爬到n-2阶方案数之和
   return climbStairs(n - 1) + climbStairs(n - 2)
 };
+// 循环，可加快速度
+function climbStairs(n) {
+  var n1 = 1, n2 = 1, sum;
+  for (let i = 2; i < n; i++) {
+    sum = n1 + n2
+    n1 = n2
+    n2 = sum
+  }
+  return sum
+}
 ```
 ### 变态爬楼梯
 ```js
@@ -208,6 +304,7 @@ var climbStairs = function(n) {
 let cache = [0, 1, 2]
 var crazyClimbStairs = function(n) {
   cache[n] = 1 // 初始值总是为1
+  // 本来只有f(n-1) + f(n - 2)，现在造一个循环
   for (let i = n - 1; i >= 1; i--) {
     cache[n] += crazyClimbStairs(i)
   }

@@ -46,7 +46,7 @@
   - [隐藏式授权](#隐藏式授权)
   - [密码式授权](#密码式授权)
   - [凭证式授权](#凭证式授权)
-  - [JWT的结构](#jwt的结构)
+  - [JWT](#jwt)
 - [中间人攻击](#中间人攻击)
 - [header与body是怎么做分隔的](#header与body是怎么做分隔的)
 - [TCP和UDP的区别](#tcp和udp的区别)
@@ -68,13 +68,13 @@
 
 ## 常用HTTP Code
 * `100 Continue` 使用curl发送超过1k的post请求时，首先发送头信息包含`Expect:100-continue`的请求，服务器回复100，收到响应后发送post数据。
-* `200 OK`/`201 Created`/`204 No Content`
-* `301 Moved Permanently`永久移动/`302 Found`临时移动, 响应头中的Location字段来跳转/`304	Not Modified`浏览器会访问缓存资源
-* `400 	Bad Request`请求语法错误，服务器无法理解/`401	Unauthorized`/`403 Forbidden`/`404 Not Found`/`405 Method Not Allowed`
+* `200 OK`/`201 Created`/`202 Accepted`已接受但未处理完成/`204 No Content`
+* `301 Moved Permanently`永久移动/`302 Found`临时移动, 响应头中的Location字段来跳转/`304	 Not Modified`浏览器会访问缓存资源
+* `400 Bad Request`请求语法错误，服务器无法理解/`401	Unauthorized`/`403 Forbidden`/`404 Not Found`/`405 Method Not Allowed`
 * `500 Internal Server Error`内部错误/`502 Bad Gateway` 网关请求相关服务器时收到无效响应/`503	Service Unavailable` 由于超载或系统维护，暂时无法处理请求/`504 Gateway Timeout`
 
 ## 从输入URL到页面加载完成都发生了什么
-结合浏览器performance.timing可以了解到详细过程
+**结合浏览器performance.timing可以了解到详细过程**
 ### 缓存相关
 1. 卸载原有页面: 以释放内存
 2. 重定向: 如果有本地缓存则直接使用，否则向服务器进行请求
@@ -249,8 +249,23 @@ style-src cdn.example.org third-party.org; child-src https:
 * `report-uri /my_amazing_csp_report_parser`
 浏览器会使用POST方法，发送一个JSON对象
 ```js
-
+{
+  "csp-report": {
+    "document-uri": "http://example.org/page.html",
+    "referrer": "http://evil.example.com/",
+    "blocked-uri": "http://evil.example.com/evil.js",
+    "violated-directive": "script-src 'self' https://apis.google.com",
+    "original-policy": "script-src 'self' https://apis.google.com; report-uri http://example.org/my_amazing_csp_report_parser"
+  }
+}
 ```
+**选项值**
+每个限制选项可以设置以下值，这些值构成了白名单
+* 主机名 protrol://domain:port
+* 路径名 example.org/resources/js/
+* 通配符 *://*.example.com:*
+* 协议名
+* 关键词 self: 当前域名，none: 禁止加载任何外部资源。
 
 ## 解决跨域的方法
 不同源的两个页面有三种限制
@@ -290,7 +305,7 @@ window.parent.document.body // 在子窗口
 * 增删改查通常映射为POST/DELETE/PATCH(局部更新)PUT(替换)/GET，直接通过url参数增删改会造成CSRF攻击。安全性无区别。
 
 ## CORS
-是一个W3C标准，全称`Cross-origin resource sharing` 跨域资源共享，克服了Ajax只能同源使用的限制
+是一个W3C标准，全称`Cross-origin resource sharing`跨域资源共享，克服了Ajax只能同源使用的限制
 ### 两种请求
 浏览器将CORS请求分为两类：
 简单请求:
@@ -300,7 +315,7 @@ window.parent.document.body // 在子窗口
 * Accept-Language
 * Content-Language
 * Content-Type `只限于三个值application/x-www-form-urlencoded、multipart/form-data、text/plain`
-这是为了兼容表单，因为表单一直可以发送跨域请求。
+这是为了兼容表单，因为表单一直可以发送跨域请求，会刷新页面不会把结果返回给js，相对安全。
 不能满足上面两个条件的就属于非简单请求。
 
 ### 简单请求
@@ -493,7 +508,11 @@ https://oauth.b.com/token?
 这种令牌是针对第三方应用而不是某个用户的，可能多用户共享。
 
 JWT(JSON Web Token) 是一个开放标准(RFC 7519)，通过数字签名将JSON对象加密，安全传输信息。
-### JWT的结构
+### JWT
+目前最流行的跨域认证解决方案
+* 服务器认证后，生成一个JSON对象，返回给用户，之后用户与服务器通信都要发回这个JSON对象，服务器只靠改对象认定用户身份。
+* 为了防止用户篡改数据，服务器会加上签名，服务器不保留任何数据。
+* 数据结构
 *Header.PayLoad.Signature*
 1. Header
 ```js
@@ -514,7 +533,12 @@ JWT(JSON Web Token) 是一个开放标准(RFC 7519)，通过数字签名将JSON�
 ```
 3. Signature
 签名，使用一个私钥（private key）通过特定算法对Header和Claims进行混淆产生签名信息。
-私钥可以认真token的有效性，不要将私钥放在客户端。
+私钥可以认证token的有效性，不要将私钥放在客户端。
+
+* 使用方式
+客户端收到JWT，可以储存在LocalStorage，客户端发送请求时将jwt放在头信息的Authorization中。
+* jwt可以减少数据库查询，最大缺点是服务器不保存session状态，无法在使用过程更改/废除token，除非服务器有额外逻辑。
+* 应该设置短的有效期，并使用https协议传输。
 
 ## 中间人攻击
 * 指攻击者与通讯的两端分别创建独立的联系，并交换其所收到的数据，使通讯的两端认为他们正在通过一个私密的连接与对方直接对话，但事实上整个会话都被攻击者完全控制。

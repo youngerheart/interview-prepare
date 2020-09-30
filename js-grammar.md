@@ -20,6 +20,7 @@
   - [null表示没有该对象](#null表示没有该对象)
   - [undefined表示缺少值](#undefined表示缺少值)
 - [JS隐式类型转换](#js隐式类型转换)
+- [js位运算](#js位运算)
 - [new操作符具体做了什么](#new操作符具体做了什么)
 - [Map/Set对象用法](#mapset对象用法)
   - [Map](#map)
@@ -168,7 +169,7 @@ result.next(2) // {value: 4, done: false} a=2, b=4
 result.next(3) // {value: 0, done: false} b=3
 result.next(4) // {value: 2, done: false}
 
-function* gene(a, b) {
+function* gen(a, b) {
   console.log(a, b);
   var c = yield 'c';
   console.log("c====", c);
@@ -176,7 +177,7 @@ function* gene(a, b) {
   console.log("d====", d)
   return 6;
 }
-var g = gene("a", "b");
+var g = gen("a", "b");
 var e = g.next("e1", "e2"); // 之前没有yield,无效, e='c'
 var f = g.next("f1", "f2"); c='f1', f='d'
 console.log("e====", e);
@@ -230,7 +231,7 @@ readFileThunk(fileA)(callback);
 ```js
 function run(fn) {
   var gen = fn();
-
+  // 定义回调函数
   function next(err, data) {
     // data即文件读取的值(第一次无效)
     if (err) throw err;
@@ -319,6 +320,9 @@ var Hi = (function (_super) {
 let 声明的变量的作用域是块级的；
 let 不能重复声明已存在的变量；
 let 有暂时死区(声明之前不可用)，不会被提升。
+```js
+Uncaught ReferenceError: Cannot access 'a' before initialization
+```
 * 深层原理
 let 的「创建」过程被提升了，但是初始化没有提升。(这时不能使用，暂时性死区)
 var 的「创建」和「初始化」都被提升了。
@@ -357,7 +361,25 @@ undefined === undefined // true
 undefined == true // true
 null === null // true
 NaN == NaN // false NaN和任何数据不等
+'test' + NaN // 'testNaN'
+'test' * NaN // NaN
 ```
+
+## js位运算
+将十进制先转二进制
+5=>101
+* &-与
+两位同时为1，结果才为1，否则为0
+5 & 1 = 1
+* |-或
+其中一个为1，结果为1，否则为0
+5 | 1 = 5
+* ~-非
+按位取反，将除去符号位外其他取反，末位加1取补码
+  1. 0000 0101
+  2. 1111 1010
+  3. 1000 0101
+  4. 1000 0110 //-6
 
 ## new操作符具体做了什么
 * 创建一个新对象，将构造函数的作用域赋值给新对象

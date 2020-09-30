@@ -28,8 +28,14 @@
 - [移动端点击延迟](#移动端点击延迟)
   - [解决方案](#解决方案)
 - [各种前端异常的捕获方式](#各种前端异常的捕获方式)
+  - [构思后端处理的方法？](#构思后端处理的方法)
 - [获取dom对象的样式值](#获取dom对象的样式值)
 - [在父级捕获停止冒泡的子元素事件？](#在父级捕获停止冒泡的子元素事件)
+- [WebAssembly（集会/装配）](#webassembly集会装配)
+  - [定义](#定义)
+  - [环境搭建](#环境搭建)
+  - [编译运行](#编译运行)
+  - [asm.js](#asmjs)
 
 <!-- /TOC -->
 
@@ -284,6 +290,11 @@ aler("hello") // alert 被写成了 aler
 对于setTimeout/setInterval，用新函数的try/catch包裹，有错误直接抛出
 可捕获message/url/line/colume/other{stack/name}信息
 
+### 构思后端处理的方法？
+* 借鉴Vue的方法创建消息队列，请求生成生产者，fs.writeFile为消费者，使用promise.all返回结果
+* 使用新特性`Worker Threads` node --experimental-worker xxx.js
+* 使用`cluster`针对cpu数量执行cluster.fork()与监听
+
 * 资源加载错误
 ```js
 <img src="test.jpg"> // 并不存在该图片，返回了404
@@ -344,3 +355,46 @@ document.body.addEventListener('click', (e) => console.log('use capture', e.targ
 // use capture <p id=​"duang">​...</p>​
 // duang clicked
 ```
+
+## WebAssembly（集会/装配）
+### 定义
+* WebAssembly（缩写Wasm）基于堆栈虚拟机的二进制指令格式。可用于编译C/C++/RUST等语言，使客户端和服务器应用程序能在web上部署。
+* C语言代码被编译为.wasm文件，不能直接被浏览器识别，需要一种称为js胶接代码的东西来加载。
+* WebAssembly结合WebGL使得大型游戏迁移到浏览器将变为可能。
+* 浏览器执行时依然对其有安全限制。
+### 环境搭建
+* 安装好`emsdk`
+### 编译运行
+```
+emcc helloworld.c -s BINARYEN=1 -s SIDE_MODULE=1 -O3 -o helloworld.wasm
+```
+```js
+let imports = {
+  env: {
+    // 内存空间
+    memoryBase: 0,
+    memory: new WebAssembly.Memory({initial: 256 }),
+    // 变量映射表
+    tableBase: 0,
+    table: new WebAssembly.Table({initial: 0, element: "anyfunc" }),
+    // 注入函数
+    _alert: function (p) {
+      // 通过 C代码生成的文件被解析后会自动加上一个 _ ，具体原因可能是因为避免重名
+      // p为字符串在指定内存区域的 offset 值，在 C 中，一个字符串后会跟着一个 \0 字节
+      alert(utf8ToString(p));
+    }
+  }
+}
+fetch('helloworld.wasm') // 加载（需要在服务器环境）
+.then(response => response.arrayBuffer()) // 读取buffer
+.then(bytes => WebAssembly.instantiate(bytes, imports)) // 编译/实例化
+.then(mod => mod.instance) // 传出instance对象
+.then(instance => {
+  let exports = instance.exports; // 取出exports对象
+  exports._sayHi(); // 执行方法
+});
+```
+### asm.js
+* 变量一律都是静态类型，并且取消垃圾回收机制。除了这两点，它与 JavaScript 并无差异，也就是说，asm.js 是 JavaScript 的一个严格的子集，只能使用后者的一部分语法。
+* 一旦 JavaScript 引擎发现运行的是 asm.js，就知道这是经过优化的代码，可以跳过语法分析这一步，直接转成汇编语言。另外，浏览器还会调用 WebGL 通过 GPU 执行 asm.js，即 asm.js 的执行引擎与普通的 JavaScript 脚本不同。这些都是 asm.js 运行较快的原因。据称，asm.js 在浏览器里的运行速度，大约是原生代码的50%左右。通过`Emscripten`将C代码转为asm.js。
+* asm.js转出文本，人类可读，兼容性高，WebAssembly转出二进制字节码，运行更快，体积更小。
