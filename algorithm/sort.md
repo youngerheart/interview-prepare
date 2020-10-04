@@ -1,5 +1,6 @@
 ## 排序算法
 ### 冒泡排序
+* 时间: `O(n^2)`空间`O(1)`
 从头到位比较相邻元素，如果第一个比第二个大，交换。直到最后一个元素，重复以上步骤
 ```js
 function bubbleSort(arr) {
@@ -17,6 +18,7 @@ function bubbleSort(arr) {
 }
 ```
 ### 选择排序
+* 时间`O(n^2)`空间`O(1)`
 在未排序序列中找到最小(大)元素放到末尾(起始),再在剩余元素中重复该步骤
 ```js
 function selectSort(arr) {
@@ -34,12 +36,13 @@ function selectSort(arr) {
 ```
 
 ### 插入排序
+* 时间`O(n^2)`空间`O(1)`
 从第一个元素开始，取下一个元素，在已排序列表从后到前比较，如果该元素小于某元素则插入某元素之前。
 ```js
 function insertSort(arr) {
   let { length } = arr
   for (let i = 1; i < length; i++) {
-    let currentNum = arr.splice(i, 1)[0]
+    let currentNum = arr.splice(i, 1)[0] // 可以从第二个元素开始取
     for (let j = 0; j < i; j++) {
       if (currentNum < arr[j]) { // 当该元素小于已排序列表某元素，或者在列表末尾都需要插入
         arr.splice(j, 0, currentNum)
@@ -54,6 +57,7 @@ function insertSort(arr) {
 ```
 
 ### 希尔排序
+时间O(n^1.3)空间O(1)
 * 取一个小于序列长度n的整数d1作为一个增量，将所有距离为d1的记录放在同一个组，对各组进行逐个对比交换
 * 再取d1的一半的整数d2为增量分组做直接插入排序，直到增量为1
 
@@ -77,6 +81,7 @@ function shellSort(arr) {
 ```
 
 ### 归并排序
+时间O(nlogn)空间O(nlogn)
 * 将未排序序列拆分为序列长度n个长度为1的子序列
 * 申请空间，其大小为两个已经排序序列之和，用来存放合并后的序列
 * 设定两个指针，最初位置分别为两个已经排序序列的起始位置
@@ -117,6 +122,7 @@ function merge(left, right) {
 ```
 
 ### 快速排序
+时间O(nlogn)空间O(nlogn)
 * 从数列中取出一个数作为基准数
 * 将比这个数大的数全部放在右边，小于或等于它的数全部放到左边。
 * 对左右区间重复第二部，直到区间只有一个数

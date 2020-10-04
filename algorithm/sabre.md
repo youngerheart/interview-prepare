@@ -29,7 +29,7 @@
 * 从尾到头打印链表
 **不允许修改输入的数据**
 * 后进先出，可以用栈实现。每经过一个节点，把该节点，放到一个栈，遍历完整个列表，再从栈顶输出节点的值，即可翻转`t=O(2n)`
-* 每访问到一个节点，先递归输出后面的节点，再输出自身。`t=O(n)`
+* 每访问到一个节点，先递归输出后面的节点，再输出自身。`t=O(n)`（嵌套需要考虑调用栈溢出问题）
 
 ## 二叉树
 * 输入某二叉树的前序遍历和中序遍历的结果，请重建该二叉树
@@ -41,4 +41,62 @@
 如果该节点是父节点的右子节点，需要向上遍历，找到一个是父节点左子节点的节点，该节点的父节点就是下一个节点。
 
 ## 栈和队列
-用两个栈实现队列
+* 用两个栈实现队列，实现队列的两个函数appendTail和deleteHead，分别完成在队列尾部插入节点和在队列头部删除节点的功能。
+使用栈1入队，出队时用栈2负负得正再出队
+* 用两个队列实现一个栈
+将栈元素全部放入同一队列a，出栈时先放队列头部n-1个数到队列b，再将队尾出列即出栈。
+
+## 算法和数据操作
+* 斐波那契数列
+如果使用递归来求解，会发现函数依赖关系树中很多节点是重复的，且重复节点随着n的增大而急剧增加，造成重复计算
+应该直接通过循环由0开始算到f(n),`O(n)`
+
+* 旋转数组的最小数字：把一个数组最开始的若干个元素搬到数组的末尾，称之为数组的旋转。输入一个递增排序的数组的一个旋转，输出旋转数组的最小元素。
+用两个指针分别指向第一个和最后一个元素，第一个应该大于等于最后一个。取中间元素，如果大于第一指针，第一指针指向中间元素，否则第二指针指向中间元素，最终两个指针指向相邻元素。
+特例：第一个元素小于最后一个，代表旋转了0位，直接返回第一个元素。
+
+* 矩阵中的路径：设计一个函数，判断在一个矩阵中是否存在一条包含字符串所有字符的路径（不能重复进入路径）。
+在矩阵中任选一个格子作为路径的起点。如果路径上第i个字符是x，到相邻格子寻找第i + 1个字符，如果没有找到，在路径上回到第n-1个字符重新定位。需要定义和字符矩阵大小一样的布尔值矩阵标识是否进入过格子。
+
+```js
+function hasPath(matrix, str) {
+  let rows = matrix.length
+  let cols = matrix[0].length
+  if (!matrix || rows < 1 || cols < 1 || !str) return false
+  let visited = []
+  let pathLenth = 0
+  function hasPathCore (row, col) {
+    if (!str[pathLenth]) return true // 遍历结束
+    let pass = false
+    if (row < 0 || row >= rows || col < 0 || col >= rows) return pass
+    if (!visited[row]) visited[row] = []
+    if (matrix[row][col] === str[pathLenth] && !visited[row][col]) {
+      ++pathLenth
+      visited[row][col] = true
+      pass = hasPathCore(row, col - 1)
+      || hasPathCore(row - 1, col)
+      || hasPathCore(row, col + 1)
+      || hasPathCore(row + 1, col)
+      if (!hasPath) {
+        --pathLenth
+        visited[row][col] = false
+      }
+    }
+    return pass
+  }
+  for (let row = 0; row < rows; ++row) {
+    for (let col = 0; col < cols; ++ col) {
+      if (hasPathCore (row, col)) return true
+    }
+  }
+  return false
+}
+
+let matrix = [
+  ['a', 'b', 't', 'g'],
+  ['c', 'f', 'c', 's'],
+  ['j', 'd', 'e', 'h']
+]
+
+console.log(hasPath(matrix, 'bfce'), hasPath(matrix, 'bfceeee')); // true, false
+```
