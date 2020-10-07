@@ -1,3 +1,19 @@
+<!-- TOC -->
+
+- [基础](#基础)
+  - [数组](#数组)
+  - [二维数组](#二维数组)
+  - [字符串](#字符串)
+  - [链表](#链表)
+  - [二叉树](#二叉树)
+  - [栈和队列](#栈和队列)
+  - [算法和数据操作](#算法和数据操作)
+  - [动态规划与贪婪算法](#动态规划与贪婪算法)
+  - [位运算](#位运算)
+- [高质量](#高质量)
+
+<!-- /TOC -->
+
 # 基础
 ## 数组
 * 长度n的数组里的数字都在0~n-1范围[2, 3, 1, 0, 2, 5, 3]，找出重复数字
@@ -58,6 +74,8 @@
 * 矩阵中的路径：设计一个函数，判断在一个矩阵中是否存在一条包含字符串所有字符的路径（不能重复进入路径）。
 在矩阵中任选一个格子作为路径的起点。如果路径上第i个字符是x，到相邻格子寻找第i + 1个字符，如果没有找到，在路径上回到第n-1个字符重新定位。需要定义和字符矩阵大小一样的布尔值矩阵标识是否进入过格子。
 
+首先通过遍历找到入口，再使用递归找出字符串每个字符的路径
+
 ```js
 function hasPath(matrix, str) {
   let rows = matrix.length
@@ -78,6 +96,7 @@ function hasPath(matrix, str) {
       || hasPathCore(row, col + 1)
       || hasPathCore(row + 1, col)
       if (!hasPath) {
+        // 回溯
         --pathLenth
         visited[row][col] = false
       }
@@ -100,3 +119,142 @@ let matrix = [
 
 console.log(hasPath(matrix, 'bfce'), hasPath(matrix, 'bfceeee')); // true, false
 ```
+
+* 机器人的运动范围：地上有一个m行n列的方格，机器人从坐标(0, 0)的格子开始移动，不能进入行坐标和列坐标数位之和大于k的格子，请问该机器人能够到达多少格子。
+
+在机器人准备进入(i, j)的格子时，检查数位和，如果可以进入，再判断相邻的四个格子。同样使用bool的二维数组判断该路径是否被使用
+
+## 动态规划与贪婪算法
+
+分析是否能把大问题分解成小问题，同时小问题都存在最优解，即可使用动态规划来解决问题。
+
+* 剪绳子：给定一个长度为n的绳子，剪成m段。请问子段可能的最大乘积是多少。
+动态规划：f(2) = 1，f(3) = 2
+
+```js
+function maxCutting (length) {
+  if (length < 2) return 0
+  if (length === 2) return 1
+  if (length === 3) return 2
+  let products = [0, 1, 2, 3]
+  let max, product
+  for (let i = 4; i <= length; i++) {
+    max = 0
+    for (let j = 1; j <= i / 2; j++) {
+      product = products[j] * products[i - j]
+      if (max < product) max = product
+    }
+    products[i] = max
+  }
+  return products[length]
+}
+```
+
+贪婪算法：当n >= 5时，尽可能多剪长度为3的身子，剩下绳子长度为4时，剪成长度为2的绳子(题目规定至少剪一刀)。
+
+证明：m >= 5 时可以得到2(n - 2) = 6 <= 6 = 3(n - 3)且双方均大于n
+
+```js
+function maxCutting2 (length) {
+  if (length < 2) return 0
+  if (length === 2) return 1
+  if (length === 3) return 2
+  // 乘以3的数目
+  let times = Math.floor(length / 3)
+  if (length - times * 3 === 1) times--
+  let timesOf2 = (length - times * 3) / 2
+  let res = 1
+  while (times) {
+    res *= 3
+    times--
+  }
+  while (timesOf2) {
+    res *= 2
+    timesOf2--
+  }
+  return res
+}
+```
+
+## 位运算
+
+* 实现一个函数，输入一个整数，输出该二进制表示中1的个数。
+当输入负数并右移运算，最终数字会变为0*ffffffff陷入死循环。
+
+如果一个整数不为0，其二进制至少有一位为1，将其减去1，都是将最右的1变为0，如果其右边还有0，则将所有0变为1，则可以做与运算代替右移。
+
+1110减去1为1101，将其和1110做与运算结果为1100，继续减去1为1011，做与运算为1000。
+```js
+function numberOf1(n) {
+  let count = 0
+  while (n) {
+    ++count
+    n = (n - 1) & n
+  }
+  return count
+}
+```
+
+# 高质量
+
+* 规范性: 清晰的书写/清晰的布局/合理的命名
+* 完整性: 功能测试(正常传参时的功能)/边界测试(确保传参不溢出)/负面测试(传参是不同类型)
+返回错误信息: 函数使用返回值/设置全局变量/抛出异常
+
+* 数值的整数次方
+实现函数power(base, exponent), 求base的exponent次方，不需要考虑大数问题
+
+高效解法
+```js
+a^n = a^(n/2) * a^(n/2) // n是奇数
+    = a^((n-1)/2) * a^((n-1)/2) * a // n是偶数
+```
+```js
+function power(base, exponent) {
+  if (base == 0 && exponent < 0) return 0
+  let result = unsignedPower(base, Math.abs(exponent))
+  if (exponent < 0) result = 1 / result
+  return result
+}
+function unsignedPower(base, exponent) {
+  if (exponent === 0) return 1
+  if (exponent === 1) return base
+  let res = power(base, exponent >> 1) // 右移代替除以2
+  res *= res
+  if (exponent & 0X1 === 1) // 判断奇偶
+    res *= base
+  return res
+}
+power(2, -2)
+```
+
+* 答应从1到最大的n位数
+把数字的每一位从0到9排列一遍，就得到了所有的十进制数。
+```js
+// function printNumber(number) {}
+function printToMax(n) {
+  if (n <= 0) return
+  let number = [];
+  for (let i = 0; i < 10; i++) {
+    // 首位的数字从0到9
+    number[0] = i
+    printToMaxLoop(number, n, 0)
+  }
+}
+
+function printToMaxLoop(number, length, index) {
+  // 递归，在处理后索引为总长度-1时输出
+  if (index === length - 1) {
+    let output = number.slice()
+    while (!output[0] && output.length > 1) output.shift()
+    console.log(output.join(''))
+    return
+  }
+  for (let i = 0; i < 10; i++) {
+    number[index + 1] = i
+    printToMaxLoop(number, length, index + 1)
+  }
+}
+```
+
+* 删除链表的节点，在O(1)时间内删除链表节点
