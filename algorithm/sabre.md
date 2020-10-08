@@ -219,7 +219,7 @@ function power(base, exponent) {
 function unsignedPower(base, exponent) {
   if (exponent === 0) return 1
   if (exponent === 1) return base
-  let res = power(base, exponent >> 1) // 右移代替除以2
+  let res = unsignedPower(base, exponent >> 1) // 右移代替除以2，如果是奇数则为减一后除2
   res *= res
   if (exponent & 0X1 === 1) // 判断奇偶
     res *= base
@@ -228,7 +228,7 @@ function unsignedPower(base, exponent) {
 power(2, -2)
 ```
 
-* 答应从1到最大的n位数
+* 打印从1到最大的n位数
 把数字的每一位从0到9排列一遍，就得到了所有的十进制数。
 ```js
 // function printNumber(number) {}
@@ -258,3 +258,139 @@ function printToMaxLoop(number, length, index) {
 ```
 
 * 删除链表的节点，在O(1)时间内删除链表节点
+如果遍历链表则时间复杂度为O(n)。可以将需要删除的i节点后的j节点的内容复制到i，将i指针指向j的下一个节点，再删除j，可以达到删除原有i的效果。如果i是尾节点，还是需要遍历。如果链表只有一个节点，需要将头结点赋值为null。
+
+```js
+deleteNode(head, target) {
+  if (!head || !target) return
+  // 要删除的不是尾节点
+  if (target.next !== null) {
+    let next = target.next
+    target.value = next.value
+    target.next = next.next
+    next = null
+  } else if (head === target) {
+    // target无next且为头节点
+    head = null
+  } else {
+    //target为尾节点
+    let focus = head
+    while (focus.next !== target) {
+      focus = focus.next
+    }
+    delete focus.next
+  }
+}
+```
+
+* 删除链表中重复的节点
+一个排序的列表中删除重复节点，如1-2-3-3-4-4-5删除后为1-2-5。从头遍历链表，如果当前节点与下一个相同，那么他们是重复的节点，可以被删除。
+
+```js
+function deleteDuplication(head) {
+  if (head === null) return
+  let prev = null
+  let current = head
+  let next = null
+  let needDelete = false
+  while (current !== null) {
+    next = current.next
+    needDelete = false
+    if (next !== null && next.value === current.value) needDelete = true
+    if (!needDelete) {
+      prev = current
+      current = next
+    } else {
+      let value = current.value
+      let shouldDel = current
+      while (shouldDel != null && shouldDel.value == value) {
+        shouldDel = shouldDel.next
+      }
+      // 头部被删除
+      if (prev === null) head = next
+      else prev.next = next
+      current = next
+    }
+  }
+}
+```
+
+* 正则表达式匹配
+实现一个函数用来匹配包含`.`(表示任意字符)和`*`(前面的字符可以出现任意次)的正则表达式，
+
+```js
+{
+  let str, pattern
+  function match(currentStr, currentPattern) {
+    str = currentStr
+    pattern = currentPattern
+    if (typeof str !== 'string' || typeof pattern !== 'string') return false
+    return matchCore()
+  }
+  function matchCore (strIndex = 0, patternIndex = 0) {
+    if (!str[strIndex] && !pattern[patternIndex]) return true
+    if (str[strIndex] && !pattern[patternIndex]) return false
+    if (pattern[patternIndex + 1] === '*') {
+      // 如果当前字符匹配，或者当前匹配符为任意字符
+      if (pattern[patternIndex] === str[strIndex] || pattern[patternIndex] === '.' && str[strIndex]) {
+        // 均匹配下一个字符
+        return matchCore(strIndex + 1, patternIndex + 2)
+        // 匹配下一个字符与当前匹配符
+        || matchCore(strIndex + 1, patternIndex)
+        // 匹配当前字符与下一个匹配符
+        || matchCore(strIndex, patternIndex + 2)
+      } else return matchCore(strIndex, patternIndex + 2)
+    }
+    if (pattern[patternIndex] === str[strIndex] || pattern[patternIndex] === '.' && str[strIndex]) return matchCore(strIndex + 1, patternIndex + 1)
+    return false
+  }
+}
+```
+
+* 表示数值的字符串
+实现一个函数用来判断字符串是否表示数值，如：`+100`/`5e2`/`-123`/`3.14159`/`-1E-16`，但`12e`/`1a3.14`/`1.2.3`/`+-5`/`12e+5.4都不是`
+
+数值的字符串遵循`[+|-][A][.B][e|EC]`A为整数部分，B为小数部分，C跟着e或者E为数值的指数部分，在小数里可能没有数值的整数部分
+
+```js
+{
+  let index = 0
+  let str
+  function isNumber (currentStr) {
+    if (!currentStr) return false
+    str = currentStr
+    let isNum = scanInterger(str)
+    // 出现.后为小数部分
+    if (str[index] == '.') {
+      index++
+      // 小数可以没有整数部分，可以没有数字
+      isNum = scanUnsignedInteger(str) || isNum
+    }
+    // 如果出现e或者E，处理指数部分
+    if (str[index] == 'e' || str[index] == 'E') {
+      index++
+      // 小数可以没有整数部分，可以没有数字
+      isNum = isNum && scanInterger(str)
+    }
+    let oldIndex = index
+    index = 0
+    return isNum && !str[oldIndex] // 已经遍历完成
+  }
+  function scanInterger () {
+    if (str[index] === '+' || str[index] === '-') index++
+    return scanUnsignedInteger()
+  }
+  function scanUnsignedInteger() {
+    while (str[index] && str[index] >= 0 && str[index] <= 9) index++
+    return true
+  }
+}
+console.log(isNumber('123.45e+6'))
+```
+
+* 输入一个整数数组，实现一个函数来调整数字的顺序，使得奇数在前，偶数在后
+两个指针指向开头与末尾，开头为偶末尾为奇则交换位置
+
+```js
+
+```
