@@ -2,6 +2,11 @@
 
 - [v-if与v-for哪个优先级高](#v-if与v-for哪个优先级高)
 - [key的作用](#key的作用)
+- [route与router的区别？](#route与router的区别)
+  - [route](#route)
+  - [router](#router)
+- [router钩子函数](#router钩子函数)
+- [keep-alive的作用](#keep-alive的作用)
 - [组件与router中name的作用？](#组件与router中name的作用)
 - [双向绑定](#双向绑定)
   - [自定义组件使用v-model改变事件名或属性名](#自定义组件使用v-model改变事件名或属性名)
@@ -42,8 +47,59 @@
 加入key后Diff算法可以识别该节点，找到正确位置直接插入
 同标签名元素的过渡切换(transition)也会用到key属性，否则无法触发
 
+## route与router的区别？
+### route
+$route，表示当前的路由信息，每个路由都有一个route对象，包含url解析得到的信息:路径，参数，query等
+RouterView执行render时会触发root._route的getter，绑定依赖，执行transitionTo修改app._route时又触发了setter通知RouterView的渲染watcher更新
+### router
+$router是通过VueRouter构造函数得到的router实例对象，包含所有路由，关键的属性与方法
+* `$router.push/replace({ path: 'home' })/go(-1)` 向history栈中添加/替换一个路由/历史前进/后退。
+* `path/params/query/router/matched/name`
+
+## router钩子函数
+* 全局守卫 `beforeEach(to, from, next)`
+* 全局解析守卫(2.5.0+) `beforeResolve` 在导航被确认之前，同时在所有组件内守卫和异步路由组件被解析之后，解析守卫就被调用
+* 全局后置钩子`afterEach(to, from)` 路由解析后触发，无法通过next改变路由
+* 路由独享守卫`beforeEnter(to, from, next)`
+```js
+new VueRouter({
+  routes: [{
+    path: ...,
+    component: Foo,
+    beforeEnter(to, from, next) {}
+  }]
+})
+```
+* 组件独享`beforeRouteEnter/beforeRouteUpdate(被复用)/beforeRouteLeave`
+```js
+const Foo = {
+  template: `...`,
+  beforeRouteEnter (to, from, next) {
+    // 在渲染该组件的对应路由被 confirm 前调用
+    // 不！能！获取组件实例 `this`
+    // 因为当守卫执行前，组件实例还没被创建
+  },
+  beforeRouteUpdate (to, from, next) {
+    // 在当前路由改变，但是该组件被复用时调用
+    // 举例来说，对于一个带有动态参数的路径 /foo/:id，在 /foo/1 和 /foo/2 之间跳转的时候，
+    // 由于会渲染同样的 Foo 组件，因此组件实例会被复用。而这个钩子就会在这个情况下被调用。
+    // 可以访问组件实例 `this`
+  },
+  beforeRouteLeave (to, from, next) {
+    // 导航离开该组件的对应路由时调用
+    // 可以访问组件实例 `this`
+  }
+}
+```
+
+## keep-alive的作用
+* Vue提供的一个抽象组件（不会被渲染为DOM元素），用来对组件进行缓存，从而节省性能。
+* 当组件在keep-alive内被切换时组件的activated、deactivated这两个生命周期钩子函数会被执行
+* 被包裹在keep-alive中的组件的状态将会被保留，例如我们将某个列表类组件内容滑动到第100条位置，那么我们在切换到一个组件后再次切换回到该组件，该组件的位置状态依旧会保持在第100条列表处。
+* 如果想复原滚动状态，可以在new VueRouter时定义scrollBehavior参数函数，return { x: 0, y: 0 }
+
 ## 组件与router中name的作用？
-* 当项目使用keep-alive时，可搭配name进行缓存过滤`<keep-alive exclude="Home"></keep-alive>`
+* 当项目使用keep-alive时，可搭配name进行缓存过滤`<keep-alive exclude/include="Home"(排除/只缓存哪些组件)></keep-alive>`
 * 组件自己的模板递归调用自身
 ```js
 <template>

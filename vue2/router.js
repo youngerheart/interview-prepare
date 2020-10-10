@@ -40,7 +40,7 @@ RouterView支持嵌套，render中定义了depth概念来表示嵌套深度
 如果父节点也是RouterView则depth++，之后根据匹配路径和depth找到对应RouteRecord，进而找到该渲染的组件。
 再定义一个注册路由实例的方法，在beforeCreate钩子中执行，给matched.instance[name]赋值当前组件的vm实例。
 render函数最终根据component渲染出对应组件vonde
-RouterView执行render时会触发root._route的getter，绑定依赖，执行transitionTo修改app._route时又出发了setter通知RouterView的渲染watcher更新。
+RouterView执行render时会触发root._route的getter，绑定依赖，执行transitionTo修改app._route时又触发了setter通知RouterView的渲染watcher更新。
 RouterLink
 支持在具有路由功能的应用中导航。
 * 兼容history或hash模式
@@ -198,7 +198,7 @@ function install(Vue) {
         this._routerRoot = this // 根Vue实例
         this._router = this.$options.router
         this._router.init(this) // 执行初始化函数
-        Vue.util.defineReactive(this, '_route', this._router.history,current)
+        Vue.util.defineReactive(this, '_route', this._router.history, current)
       } else {
         // 子组件
         this._routerRoot = (this.$parent && this.$parent._routerRoot) || this

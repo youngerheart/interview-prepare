@@ -7,11 +7,6 @@
   - [浏览器相关](#浏览器相关)
 - [DNS中为何域名解析用UDP，区域复制用TCP](#dns中为何域名解析用udp区域复制用tcp)
 - [计算机网络体系](#计算机网络体系)
-- [TCP报文/握挥手](#tcp报文握挥手)
-  - [握手](#握手)
-  - [挥手](#挥手)
-  - [为何握手三次，挥手四次](#为何握手三次挥手四次)
-  - [为何客户端在TIME-WAIT阶段要等2MSL](#为何客户端在time-wait阶段要等2msl)
 - [CDN原理](#cdn原理)
 - [cookie的优缺点](#cookie的优缺点)
   - [窃取Cookie等信息的方法](#窃取cookie等信息的方法)
@@ -49,9 +44,24 @@
   - [JWT](#jwt)
 - [中间人攻击](#中间人攻击)
 - [header与body是怎么做分隔的](#header与body是怎么做分隔的)
+- [POST方法常用的content-type](#post方法常用的content-type)
 - [TCP和UDP的区别](#tcp和udp的区别)
   - [TCP](#tcp)
   - [UDP](#udp)
+- [TCP报文/握挥手](#tcp报文握挥手)
+  - [握手](#握手)
+  - [挥手](#挥手)
+  - [为何握手三次，挥手四次](#为何握手三次挥手四次)
+  - [为何客户端在TIME-WAIT阶段要等2MSL](#为何客户端在time-wait阶段要等2msl)
+- [TCP重传机制](#tcp重传机制)
+  - [超时重传](#超时重传)
+  - [快速重传](#快速重传)
+  - [SACK](#sack)
+  - [Duplicate SACK](#duplicate-sack)
+- [TCP滑动窗口](#tcp滑动窗口)
+  - [发送方](#发送方)
+  - [接收方](#接收方)
+  - [接收窗口和发送窗口的大小是相等的吗？](#接收窗口和发送窗口的大小是相等的吗)
 - [http1.0/http1.1/http2.0/https](#http10http11http20https)
   - [http2.0](#http20)
   - [http2.0下的前端优化](#http20下的前端优化)
@@ -70,7 +80,7 @@
 ## 常用HTTP Code
 * `100 Continue` 使用curl发送超过1k的post请求时，首先发送头信息包含`Expect:100-continue`的请求，服务器回复100，收到响应后发送post数据。
 * `200 OK`/`201 Created`/`202 Accepted`已接受但未处理完成/`204 No Content`
-* `301 Moved Permanently`永久移动/`302 Found`临时移动, 响应头中的Location字段来跳转/`304	 Not Modified`浏览器会访问缓存资源
+* `301 Moved Permanently`永久移动/`302 Found`临时移动, 响应头中的Location字段来跳转/`304 Not Modified`浏览器会访问缓存资源
 * `400 Bad Request`请求语法错误，服务器无法理解/`401	Unauthorized`/`403 Forbidden`/`404 Not Found`/`405 Method Not Allowed`
 * `500 Internal Server Error`内部错误/`502 Bad Gateway` 网关请求相关服务器时收到无效响应/`503	Service Unavailable` 由于超载或系统维护，暂时无法处理请求/`504 Gateway Timeout`
 
@@ -112,54 +122,6 @@ OSI体系分为七层，TCP/IP为五层协议
 网络->网络(IP)
 数据链路层
 物理层
-
-## TCP报文/握挥手
-TCP header中包含有
-* 序号(Seq/sequence number)用来标识从TCP源端向目的地端发送的字节流，发起方发送数据时标记。
-* 确认号(Ack/acknowledgement number)只有Ack为1时，序号字段才有效，Ack = Seq + 1。
-* 标志位(Flags)包括URG(标志紧急指针有效)/ACK(确认序号有效)/PSH(接收方应该尽快将报文交给应用层)/RST(重置连接)/SYN(发起新连接)/FIN(释放连接)
-
-### 握手
-客户端主动结束CLOSED阶段，服务端被动结束CLOSED阶段进入LISTEN阶段
-1. 客户端向服务器发送报文：
-Flags为SYN，表示“创建新链接”
-Seq为X(X一般为1)，之后客户端进入SYN-SEND阶段
-2. 服务器端收到请求后，结束LISTEN阶段并返回报文：
-Flags为SYN和ACK，表示“创建新链接/确定客户端Seq序号有效，可以正常接收数据同意创建连接”
-Seq为Y，ACK为X+1，表示收到客户端序号，将其+1作为自己的确认号，之后服务器进入SYN-RCVD阶段
-3. 客户端收到响应后，明确了数据传输正常，结束SYN-SENT阶段并返回报文：
-Flag为ACK，表示“响应有效”
-Seq为X+1，表示收到服务器端的确认号，将其作为自己的序号
-Ack为Y+1，表示收到服务器端序号，将其+1作为自己的确认号。
-随后客户端进入ESTABLISHED阶段，服务端接收到报文后也进入ESTABLISHED阶段。
-
-### 挥手
-两端都在ESTABLISHED阶段
-1. 客户端向服务器端发送报文：
-Flags为FIN，表示“请求释放链接”
-Seq为A，之后客户端进入FIN-WAIT-1(半关闭/停止发送普通数据)阶段。
-2. 服务器收到请求后，结束ESTABLISHED阶段并返回报文：
-Flags为ACK，表示“接收到服务端的释放连接请求”
-Seq为B，Ack为A+1，表示收到客户端序号并+1作为自己的确认号。
-随后服务端进入CLOSE-WAIT阶段，准备释放与该客户端的连接
-客户端收到响应后结束FIN-WAIT-1阶段进入FIN-WAIT-2阶段
-3. 服务器做好了释放连接准备，结束CLOSE-WAIT阶段，再次向客户端发出TCP报文：
-Flags为FIN，ACK，表示已经知晓客户端请求，并做好释放连接准备
-Seq为C，Ack为A+1，表示不同的序号，但确认号相同
-随后服务端进入LAST-ACK阶段，停止向客户端发送任何收据但可以接收数据
-4. 客户端收到服务端的报文，结束FIN-WAIT-2阶段，并向服务端发送报文
-Flags为ACK，表示“接收到服务器准备好释放链接的信号”
-Seq为A+1，表示收到服务器的确认号并作为自己的序号
-Ack为C+1，表示收到服务器端序号并+1作为自己的确认号
-随后客户端进入TIME-WAIT阶段开始等待2MSL，之后进入CLOSED阶段
-
-### 为何握手三次，挥手四次
-建立连接时，被动方服务器端结束CLOSED阶段不需要准备，可以直接返回SYN（创建连接）与ACK（确认序号有效）
-释放连接时，被动方服务器突然收到请求时不能立即释放连接，因为还有必要的数据要处理，所以先返回ACK确认序号有效，经过CLOSE-WAIT准备好后返回FIN、ACK释放连接报文。
-
-### 为何客户端在TIME-WAIT阶段要等2MSL
-MSL(Maximum Segment Lifetime)指一段TCP报文在传输过程中的最大生命周期，2MSL即服务端发出FIN和客户端发出ACK所能保持的最大时长
-如果在2MSL中又接收到服务器的FIN，说明服务器端由于网络原因没收到客户端的ACK，客户端再次发送ACK重新开始等待2MSL。
 
 ## CDN原理
 资源上传CDN后，访问时会经过以下步骤：
@@ -303,7 +265,7 @@ window.parent.document.body // 在子窗口
 
 ## GET与POST区别
 * 都可以通过url与body传参，早期浏览器会有url长度限制（IE 2k,Chrome 8K）
-* 增删改查通常映射为POST/DELETE/PATCH(局部更新)PUT(替换)/GET，直接通过url参数增删改会造成CSRF攻击。安全性无区别。
+* 增删改查通常映射为POST/DELETE/**PATCH(局部更新)**/**PUT(完整替换)**/GET，直接通过url参数增删改会造成CSRF攻击。安全性无区别。
 
 ## CORS
 是一个W3C标准，全称`Cross-origin resource sharing`跨域资源共享，克服了Ajax只能同源使用的限制
@@ -327,7 +289,7 @@ window.parent.document.body // 在子窗口
 ```js
 Access-Control-Allow-Origin: http://api.bob.com
 Access-Control-Allow-Credentials: true // 资格、资历.允许客户端携带验证信息，例如 cookie
-Access-Control-Expose-Headers: 'Custom-Header' // 简单请求可以暴露的首部
+Access-Control-Expose-Headers: 'Custom-Header' // 客户端可以访问的额外首部
 ```
 CORS请求时，xhr对象的getResponseHeader方法只能拿到六个字段
 `Cache-Control/Content-Language/Content-Type/Expires(到期)/Last-Modified/Pragma(注释用于控制缓存的老字段,值: no-cache)`
@@ -343,7 +305,7 @@ xhr.widhCredentials = true; // 不需要cookie则不需要设置
 
 **发送预检请求**
 服务器发现一个非简单请求，就自动发出一个预检请求，要求服务器确认可以这样请求。
-* 请求方式是`OPTIONS`，头信息里有`Origin`以及两个特殊字段
+* 请求方式是`OPTIONS`，头信息里有`Origin: http://foo.example`以及两个特殊字段
 * `Access-Control-Request-Method` 列出该CORS请求会用到哪些HTTP方法
 * `Access-Control-Request-Headers` 指定该CORS请求会额外发送的头信息
 
@@ -400,7 +362,7 @@ http://www.c.com:8002/content/delete/:id
 
 **防范措施**
 * 验证码：强制用户与应用进行交互，但并不能所有操作都加上验证码。
-* Referer验证：验证请求源是否合法。
+* Referer验证：Referer得到的是完整的URL，可以验证请求源是否合法。
 * token验证：在请求中以参数/http头字段的形式添加一个随机token（由后端经过验证而产生）如果某个请求不包含该token或不正确则拒绝请求。token需要被保存/有有效期/刷新机制等
 
 ## sql注入方法
@@ -550,23 +512,108 @@ JWT(JSON Web Token) 是一个开放标准(RFC 7519)，通过数字签名将JSON�
 ## header与body是怎么做分隔的
 \r\n\r\n即两个换行->一个空行作为分隔
 
+## POST方法常用的content-type
+**四种常见的 POST 提交数据方式对应的content-type取值**
+* `application/x-www-form-urlencoded;charset=utf-8` POST表单常规的提交方式，数据按照`key1=val1&key2...`进行url编码
+* `multipart/form-data` (多段文件)当使用表单上传文件时需要让form标签的`enctyped`属性为该值。http body每部分都是以 --boundary 开始，紧接着内容描述信息，然后是回车，最后是字段具体内容（文本或二进制）。如果传输的是文件，还要包含文件名和文件类型信息。消息主体最后以 --boundary-- 标示结束
+* `application/json` 可以方便的提交复杂的结构化数据，特别适合 RESTful 的接口。
+* `text/xml(html/plain)` 解析为xml，html或文本
+
 ## TCP和UDP的区别
 * TCP面向连接，提供可靠服务，UDP无连接，不保证可靠交付
 * UDP没有堵塞控制，不会降低传输速率。
 * TCP支持点到点，UDP支持多端交互。
 * TCP是全双工可靠信道，UDP是不可靠信道。
+
 ### TCP
 * 优点：可靠稳定，在数据传输前握手建立连接，在数据传递时有确认/窗口/重传/堵塞控制机制，传输后可以断开连接解决资源。
 * 缺点：慢，效率低，占用资源该，易被攻击。每个连接都要占用资源。TCP机制被人利用实现DDOS攻击
 * 应用场景：整个数据要精确无误的传递给对方-HTTP/FTP/SMTP
+
 ### UDP
 * 优点：无状态传输，很快。漏洞少。
 * 缺点：不可靠，不稳定，网络不好容易丢包
 * 应用场景：语音/视频/游戏
 
+## TCP报文/握挥手
+TCP header中包含有
+* 序号(Seq/sequence number)用来标识从TCP源端向目的地端发送的字节流，发起方发送数据时标记。
+* 确认号(Ack/acknowledgement number)只有Ack为1时，序号字段才有效，Ack = Seq + 1。
+* 标志位(Flags)包括URG(标志紧急指针有效)/ACK(确认序号有效)/PSH(接收方应该尽快将报文交给应用层)/RST(重置连接)/SYN(发起新连接)/FIN(释放连接)
+
+### 握手
+客户端主动结束CLOSED阶段，服务端被动结束CLOSED阶段进入LISTEN阶段
+1. 客户端向服务器发送报文：
+Flags为SYN，表示“创建新链接”
+Seq为X(X一般为1)，之后客户端进入SYN-SEND阶段
+2. 服务器端收到请求后，结束LISTEN阶段并返回报文：
+Flags为SYN和ACK，表示“创建新链接/确定客户端Seq序号有效，可以正常接收数据同意创建连接”
+Seq为Y，ACK为X+1，表示收到客户端序号，将其+1作为自己的确认号，之后服务器进入SYN-RCVD阶段
+3. 客户端收到响应后，明确了数据传输正常，结束SYN-SENT阶段并返回报文：
+Flag为ACK，表示“响应有效”
+Seq为X+1，表示收到服务器端的确认号，将其作为自己的序号
+Ack为Y+1，表示收到服务器端序号，将其+1作为自己的确认号。
+随后客户端进入ESTABLISHED阶段，服务端接收到报文后也进入ESTABLISHED阶段。
+
+### 挥手
+两端都在ESTABLISHED阶段
+1. 客户端向服务器端发送报文：
+Flags为FIN，表示“请求释放链接”
+Seq为A，之后客户端进入FIN-WAIT-1(半关闭/停止发送普通数据)阶段。
+2. 服务器收到请求后，结束ESTABLISHED阶段并返回报文：
+Flags为ACK，表示“接收到服务端的释放连接请求”
+Seq为B，Ack为A+1，表示收到客户端序号并+1作为自己的确认号。
+随后服务端进入CLOSE-WAIT阶段，准备释放与该客户端的连接
+客户端收到响应后结束FIN-WAIT-1阶段进入FIN-WAIT-2阶段
+3. 服务器做好了释放连接准备，结束CLOSE-WAIT阶段，再次向客户端发出TCP报文：
+Flags为FIN，ACK，表示已经知晓客户端请求，并做好释放连接准备
+Seq为C，Ack为A+1，表示不同的序号，但确认号相同
+随后服务端进入LAST-ACK阶段，停止向客户端发送任何收据但可以接收数据
+4. 客户端收到服务端的报文，结束FIN-WAIT-2阶段，并向服务端发送报文
+Flags为ACK，表示“接收到服务器准备好释放链接的信号”
+Seq为A+1，表示收到服务器的确认号并作为自己的序号
+Ack为C+1，表示收到服务器端序号并+1作为自己的确认号
+随后客户端进入TIME-WAIT阶段开始等待2MSL，之后进入CLOSED阶段
+
+### 为何握手三次，挥手四次
+建立连接时，被动方服务器端结束CLOSED阶段不需要准备，可以直接返回SYN（创建连接）与ACK（确认序号有效）
+释放连接时，被动方服务器突然收到请求时不能立即释放连接，因为还有必要的数据要处理，所以先返回ACK确认序号有效，经过CLOSE-WAIT准备好后返回FIN、ACK释放连接报文。
+
+### 为何客户端在TIME-WAIT阶段要等2MSL
+MSL(Maximum Segment Lifetime)指一段TCP报文在传输过程中的最大生命周期，2MSL即服务端发出FIN和客户端发出ACK所能保持的最大时长
+如果在2MSL中又接收到服务器的FIN，说明服务器端由于网络原因没收到客户端的ACK，客户端再次发送ACK重新开始等待2MSL。
+
+## TCP重传机制
+### 超时重传
+设置一个定时器，当超过指定时间（超时重传时间 RTO 的值应该略大于报文往返 RTT 的值），没有收到对方的ACK确认应答报文（数据包丢失/确认应答丢失），就会重发该数据。
+* 问题：增加延迟，在等待时之后的报文被接收但无法被确认，发送端会认为也丢失了，从而引起不必要的重传。
+### 快速重传
+不以时间为驱动，而是以数据驱动重传。如果一次发送10字节，发送方的seq=11丢失，接收方的ack会总是11来迫使发送方重传，连续收到三个ack为11后发送方重新发送。
+* 问题：是重传之前的一个，还是重传所有（第一次丢失之后的数据也有可能丢失），根据TCP的不同实现，以上两种都有可能。
+### SACK
+每次请求重传的ack携带上之前丢失的`ACK200`和缓存标识`SACK300-400`，让发送方知道哪些数据没接收到，即可只重传丢失的数据。
+### Duplicate SACK
+接收方成功收到数据，但是应答报文丢失，发送方超时重发后接收端返回最后丢失应答包报文的`ACK400`与已经收到的`SACK200-300`告诉发送端只是应答报文丢了
+
+## TCP滑动窗口
+TCP需要每个数据包发送有应答，再发送下一个，则往返时间越长通信效率越差。TCP引入了窗口的概念，指无需确认应答，可以继续发送数据的最大值
+* 累积确认：滑动窗口方式中只要最后一个应答报文接收到，意味着之前所有数据都收到了
+* window：窗口大小，接收端告诉发送端自己还有多少缓冲区可以接收数据
+### 发送方
+* 缓存数据包括：已发送并收到ack确认的数据/已发送未收到ack确认的数据/未发送但大小在接收方处理范围内(可用窗口)/未发送但大小超过接收方处理范围。发送中+可用为发送窗口。收到应答后发送窗口缩小，可用窗口扩大，可继续使用。
+* 使用三个指针跟踪滑动窗口：SND.WND：表示发送窗口的大小。SND.UNA：指向已发送但未收到确认的第一个字节的序列号。SND.NXT：指向未发送但可发送范围的第一个字节的序列号。
+### 接收方
+* 缓存数据包括：已成功接收并确认的数据/未收到但可以接收的空间(RCV.WND)/未收到数据但不可以接收的空间
+* 使用两个指针跟踪滑动窗口：RCV.WND：表示接收窗口的大小，它会通告给发送方。RCV.NXT：指向未收到数据但可以接收的空间的第一个字节。
+
+### 接收窗口和发送窗口的大小是相等的吗？
+并不是完全相等，接收窗口的大小是约等于发送窗口的大小的。因为滑动窗口并不是一成不变的。比如，当接收方的应用进程读取数据的速度非常快的话，这样的话接收窗口可以很快的就空缺出来。那么新的接收窗口大小，是通过 TCP 报文中的 Windows 字段来告诉发送方。那么这个传输过程是存在时延的，所以接收窗口和发送窗口是约等于的关系。
+
+
+
 ## http1.0/http1.1/http2.0/https
 * 1.0: 每次连接无法复用，一个请求因为服务器正忙导致后面的请求被阻塞
-* 1.1: 默认增加connection: Keep-Alive头保证TCP的长连接可复用。增加了请求头与响应头的分别，更多的缓存头: cache-control/ETag~if-not-matched/Last-Modified~If-Modified-Since
+* 1.1: 默认增加connection: Keep-Alive头保证TCP的长连接可复用。增加了请求头与响应头的分别，更多的缓存头: cache-control/ETag~If-Not-Match/Last-Modified~If-Modified-Since
 
 ### http2.0
 * 多路复用: 将通信单位缩小为二进制帧，在双端拆分/拼装文件，可以通过单连接发起多重请求/响应。

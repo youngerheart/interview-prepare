@@ -228,3 +228,8 @@ sortByDep(modules)
   { name: 'a', requires: ['b', 'c'] }, // last, because requires both the others
 ]
 ```
+
+## 如何监控网页白屏/崩溃
+1. 利用creashed页面不会触发 beforeunload
+2. PWA(Progressive Web Apps) 有自己独立的工作线程，与网页区分开，可以使用心跳监测
+## 利用 fetch 请求 url 且需要实现超时重新请求的功能，支持设置重发次数
