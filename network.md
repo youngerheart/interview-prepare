@@ -679,6 +679,7 @@ pagespeed EnableFilters convert_png_to_jpeg,convert_jpeg_to_webp;
 ### 使用
 * 使用HTTPS访问，SSL设置正确
 * 注册：在网站页面上注册实现ServerWorker功能逻辑的脚本
+* 不要给/sw/sw.js设置缓存（为了强刷缓存，浏览器会比较新旧文件，有更新就install）！不要设置版本号（旧版本把index.html存起来就傻了）！
 ```js
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
@@ -713,6 +714,9 @@ this.addEventListener('install', event => {
     })
   );
 });
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  window.location.reload(); // 强制更新后刷新页面
+})
 ```
 * 如果希望强制更新ServiceWorker，可以在install中使用this.skipWaiting方法，直接进入active阶段，再通过全局的clients.claim()更新。
 * 当浏览器发起请求时，会触发fetch事件，拦截到当前作用域所有的http/https请求，给出自己的响应。
@@ -739,6 +743,7 @@ self.addEventListener('fetch', event => {
   );
 });
 ```
+* SW 的生命周期 (install -> waiting(等待老版本退出) -> activate -> fetch)
 
 ## RTMP
 1. 在TCP/IP协议之上的应用层协议，有多个变种(rtmpx)默认为使用1935端口的明文协议。

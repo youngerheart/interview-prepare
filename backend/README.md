@@ -2,6 +2,7 @@
 
 - [中间件原理](#中间件原理)
   - [compose](#compose)
+- [Koa与Express中间件的区别](#koa与express中间件的区别)
 
 <!-- /TOC -->
 
@@ -17,3 +18,7 @@ Promise.resolve(
   fn(ctx, dispatch.bind(null, i + 1))
 )
 抛出异常用Promise.reject(err)捕获。最后调用dispatch(0)即从第一项开始执行。
+
+## Koa与Express中间件的区别
+* koa基于promise实现，实现了支持异步的洋葱头模型
+* express基于递归调用实现，仅支持同步洋葱头模型(无法await next)

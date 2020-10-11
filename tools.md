@@ -1,15 +1,30 @@
 <!-- TOC -->
 
+- [Webpack的作用](#webpack的作用)
 - [Webpack优化](#webpack优化)
   - [加快构建速度](#加快构建速度)
   - [优化打包文件体积（webpack-bundle-analyzer）](#优化打包文件体积webpack-bundle-analyzer)
   - [优化使用体验（webpack-dev-server）](#优化使用体验webpack-dev-server)
+- [webpack tree-shaking原理](#webpack-tree-shaking原理)
+  - [dead code](#dead-code)
+- [electron](#electron)
+  - [渲染进程与主进程通信原理](#渲染进程与主进程通信原理)
 
 <!-- /TOC -->
+
+## Webpack的作用
 
 ## Webpack优化
 
 ### 加快构建速度
+* `module.rules.include` 指定loader的可查找路径
+* `resolve.module` 指定第三方库的路径
+* `resolve.alias` 别名，加快模块查找速度
+* `mainFields` 在`package.json`中定义，`resolve.mainFields`中使用，根据环境按优先级指定入口文件
+* `resolve.extensions` 按优先级指定需要解析的后缀
+* `module.noParse` 不去解析该模块的依赖
+* `HappyPack` 多线程处理loader任务
+* `ParallelUglifyPlugin` 多线程处理压缩任务
 
 1. `module.rules.include` 中填入include来配置该loader的寻找范围
 ```js
@@ -47,21 +62,24 @@ module.exports = {
 4. resolve.mainFields(指定针对ES5,ES6等环境提供不同的代码的入口文件)
 从npm包导入模块时该选项决定在package.json中使用哪个字段导入模块，根据webpack.target不同默认值也会不同，target不设置则为mainFields数组第一项
 当target设置为`webworker`, `web`或没有指定，默认值为`['browser', 'module', 'main']`，其他target(包括node)默认为`['module', 'main']`
-如: D3的package含有这些字段，则意味着会引入browser指定的入口文件，指定target为node时则为module
-```
-{
-  ...
-  main: 'build/d3.Node.js',
-  browser: 'build/d3.js',
-  module: 'index',
-  ...
+如: D3的package.json含有这些字段，则意味着会引入browser指定的入口文件，指定target为node时则为module
+```js
+// package.json
+module.exports = {
+  mainFields: {
+    ...
+    main: 'build/d3.Node.js',
+    browser: 'build/d3.js',
+    module: 'index',
+    ...
+  }
 }
 ```
 5. resolve.extensions
 后缀尝试列表要尽可能小/频率出现最高的文件后缀要优先放在最前
 
 6. module.noParse
-不去解析不引用其他包的库
+不去解析属性值代表的库的依赖
 
 ```js
 module.exports = {
@@ -146,7 +164,7 @@ module.exports = {
 
 `"analyz": "NODE_ENV=production npm_config_report=true npm run build"`
 
-接下来npm run analyz浏览器会自动打开文件依赖图的网页
+接下来npm run analyz浏览器会自动打开文件依赖图的网页，可看到每个文件的大小。
 
 ### 优化使用体验（webpack-dev-server）
 * webpack --watch 是直接打包，文件多了很慢
@@ -189,3 +207,21 @@ module.exports = {
 ```js
 webpack-dev-server --hot --inline --content-base ./dist
 ```
+
+## webpack tree-shaking原理
+传统DCE(dead code elimination)消灭不可执行代码，Tree-shaking 更关注宇消除没有用到的代码。
+
+### dead code
+* 不会被执行，不可到达
+* 执行结果不会被用到
+* 只会影响死变量（只写不读）
+
+## electron
+
+主进程负责创建页面窗口、协调进程间通信、事件分发。为了安全考虑，原生 GUI 相关的 API 是无法在渲染进程直接访问的，它们必须通过 IPC 调用主进程。这种主从进程模型缺点也非常明显，即主进程单点故障。主进程崩溃或者阻塞，会影响整个应用的响应。比如主进程跑长时间的 CPU 任务，将阻塞渲染进程的用户交互事件。
+
+* 主进程：进程间通信，窗口管理，下载，快捷键，托盘，session，可以使用Node
+* 渲染进程：负责页面渲染，具体页面的业务处理。
+* ServiceWorker(PWA)静态资源缓存，保证稳定加载
+
+### 渲染进程与主进程通信原理

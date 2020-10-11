@@ -1,4 +1,4 @@
-const Koa = require('./index');
+const Koa = require('koa');
 
 const app = new Koa();
 
@@ -21,7 +21,8 @@ app.use(async (ctx, next) => {
 
 app.use((ctx, next) => {
   console.log('middleware 3 running');
-  next();
+  ctx.res.write('hello nodejs');
+  ctx.res.end();
 })
 
 app.listen(3000, () => {

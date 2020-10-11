@@ -23,6 +23,7 @@
   - [解决了哪些问题](#解决了哪些问题)
   - [使用场景](#使用场景)
   - [具体用法](#具体用法)
+  - [工作原理](#工作原理)
 - [VueRouter中history模式和hash模式的异同](#vuerouter中history模式和hash模式的异同)
 
 <!-- /TOC -->
@@ -308,6 +309,23 @@ export default {
     ...mapGetters(namespace, ['fnName'])
   }
 }
+```
+
+### 工作原理
+* computed
+首先参考一下computed。在响应式数据getter中，dep.Target存在时调用dep.depend()，将当前数据的dep对象中的subs插入该watcher。setter中调用dep.notify，使得具有该依赖的watcher全部更新。
+
+每一个computed属性都生成了自己的Watcher（lazy版本，在有被访问时才更新）传入getter为本身定义函数，调用了defineComputed方法。
+
+* 插件
+Vuex插件在所有组件的beforeCreate注入了this.$store对象。在业务中需要写以下代码
+```js
+const store = new Vuex.Store({
+  state,
+  mutations,
+  actions,
+  modules
+})
 ```
 
 ## VueRouter中history模式和hash模式的异同

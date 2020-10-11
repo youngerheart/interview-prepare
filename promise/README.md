@@ -1,5 +1,6 @@
 <!-- TOC -->
 
+- [Promise标准](#promise标准)
 - [CustomPromise](#custompromise)
   - [then函数](#then函数)
   - [resolvePromise函数](#resolvepromise函数)
@@ -8,6 +9,8 @@
   - [CustomPromise.all](#custompromiseall)
 
 <!-- /TOC -->
+
+## Promise标准
 
 ## CustomPromise
 
