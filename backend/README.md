@@ -21,4 +21,4 @@ Promise.resolve(
 
 ## Koa与Express中间件的区别
 * koa基于promise实现，实现了支持异步的洋葱头模型
-* express基于递归调用实现，仅支持同步洋葱头模型(无法await next)
+* express基于递归调用实现，仅支持同步洋葱头模型(无法await next)，只能显式调用Promise。

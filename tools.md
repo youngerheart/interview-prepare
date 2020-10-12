@@ -6,7 +6,8 @@
   - [优化打包文件体积（webpack-bundle-analyzer）](#优化打包文件体积webpack-bundle-analyzer)
   - [优化使用体验（webpack-dev-server）](#优化使用体验webpack-dev-server)
 - [webpack tree-shaking原理](#webpack-tree-shaking原理)
-  - [dead code](#dead-code)
+  - [DCE消除dead code](#dce消除dead-code)
+  - [Tree-shaking消除无用模块](#tree-shaking消除无用模块)
 - [electron](#electron)
   - [渲染进程与主进程通信原理](#渲染进程与主进程通信原理)
 
@@ -209,12 +210,22 @@ webpack-dev-server --hot --inline --content-base ./dist
 ```
 
 ## webpack tree-shaking原理
-传统DCE(dead code elimination)消灭不可执行代码，Tree-shaking 更关注宇消除没有用到的代码。
+传统DCE(dead code elimination)消灭不可执行代码，Tree-shaking 更关注于消除没有用到的代码。
 
-### dead code
-* 不会被执行，不可到达
-* 执行结果不会被用到
+### DCE消除dead code
+* 不会被执行，不可到达(如return之后的代码)
+* 执行结果不会被用到(不会被赋值)
 * 只会影响死变量（只写不读）
+* uglify完成了js的DCE
+### Tree-shaking消除无用模块
+通过ES6 module做静态分析（webpack自带了）
+特点：依赖关系是确定的（不可动态引入），和运行时的状态无关
+* 只能作为模块顶层的语句出现
+* import 的模块名只能是字符串常量
+* import binding是不变的
+试验：
+* webpack 中可以对模块的未使用函数做消除
+* 不可以对未使用的类做消除，因为模块中可能做了除定义模块外的拓展，如定义Array.prototype的属性
 
 ## electron
 
@@ -225,3 +236,4 @@ webpack-dev-server --hot --inline --content-base ./dist
 * ServiceWorker(PWA)静态资源缓存，保证稳定加载
 
 ### 渲染进程与主进程通信原理
+使用node的net模块实现，在windows下通过管道，mac下通过服务

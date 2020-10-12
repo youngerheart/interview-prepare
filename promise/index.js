@@ -1,129 +1,106 @@
+// 实现一个基于promise/A+规范的CustomPromise
+// 构造函数，需要传入定义函数
 function CustomPromise(func) {
   this.status = 'pending'
-  this.value = undefined;
-  this.error = undefined;
-  this.onReslovedFuncs = [];
-  this.onRejectedFuncs = [];
-  let reslove = (value) => {
-    // 一旦promise状态变为成功或者失败就不会再改变
+  this.onFulFilledFuncs = []
+  this.onRejectedFuncs = []
+  this.value = undefined
+  this.reason = undefined
+  // 定义fulfilled和rejected函数
+  let fulfilled = (value) => {
+    // pending可转换为该状态，该函数只执行一次
     if (this.status === 'pending') {
-      this.status = 'resolved';
+      // fulfilled不能转换为其他状态，必须有一个value且不可改变
+      this.status = 'fulfilled'
       this.value = value
-      this.onReslovedFuncs.forEach(func => func());
+      // 当状态为fulfilled，所有onFulfilled按顺序执行
+      this.onFulFilledFuncs.forEach(func => func())
     }
   }
-  let reject = (error) => {
+  let rejected = (reason) => {
     if (this.status === 'pending') {
-      this.status = 'rejected';
-      this.error = error;
-      this.onRejectedFuncs.forEach(func => func());
+      this.status = 'rejected'
+      this.reason = reason
+      this.onRejectedFuncs.forEach(func => func())
     }
   }
-  func(reslove, reject);
+  func(fulfilled, rejected)
 }
 
-CustomPromise.prototype.then = function (onResloved, onRejected) {
-  // 如果未定义参数则赋值
-  if (typeof onResloved !== 'function') onResloved = data => data
-  if (typeof onRejected !== 'function') onRejected = err => {
-    throw err
+CustomPromise.prototype.then = function(onFulfilled, onRejected) {
+  if (!onFulfilled) onFulfilled = data => data
+  if (!onRejected) onRejected = error => {
+    throw error
   }
-  // 创建新的promise作为返回值
-  let promise = new CustomPromise((resolve, reject) => {
-    // 异步调用，正在pending状态
+  // then方法一定返回一个promise，同一个promise实例中，then可以链式调用多次
+  let promise = new CustomPromise((fulfilled, rejected) => {
+    // 异步调用，promise正在pending，使用闭包封装外界参数，推入数组
     if (this.status === 'pending') {
-      this.onReslovedFuncs.push(() => {
+      this.onFulFilledFuncs.push(() => {
         try {
-          let res = onResloved(this.value)
-          // 当上一个Promise成功后调用下一个Promise的resolve, reject来触发下一个Promise的回调
-          resolvePromise(promise, res, resolve, reject);
+          // 取得上一个onFulfilled的返回值
+          let res = onFulfilled(this.value)
+          resolvePromise(promise, res, fulfilled, rejected)
         } catch (err) {
-          reject(err)
+          rejected(err)
         }
       })
       this.onRejectedFuncs.push(() => {
         try {
-          let error = onRejected(this.error)
-          resolvePromise(promise, error, resolve, reject);
+          // 取得上一个onRejected的返回值
+          let err = onRejected(this.reason)
+          resolvePromise(promise, err, fulfilled, rejected)
         } catch (err) {
-          reject(err)
+          rejected(err)
         }
       })
     }
-    // 如果调用then的时候已经resolved或者rejected
-    if (this.status === 'resolved') {
+    // 如果调用then时已经是fulfilled或rejected，直接执行
+    if (this.status === 'fulfilled') {
       try {
-        let res = onResloved(this.value)
-        resolvePromise(promise, res, resolve, reject);
+        // 取得上一个onFulfilled的返回值
+        let res = onFulfilled(this.value)
+        resolvePromise(promise, res, fulfilled, rejected)
       } catch (err) {
-        reject(err)
+        rejected(err)
       }
     }
     if (this.status === 'rejected') {
       try {
-        let error = onRejected(this.error)
-        resolvePromise(promise, error, resolve, reject);
+        // 取得上一个onRejected的返回值
+        let err = onRejected(this.reason)
+        resolvePromise(promise, err, fulfilled, rejected)
       } catch (err) {
-        reject(err)
+        rejected(err)
       }
     }
   })
   return promise
 }
 
-CustomPromise.prototype.catch = function (onRejected) {
-  this.then(null, onRejected)
-}
-
-CustomPromise.all = function (promises) {
-  let results = []
-  let index = 0
-  return new Promise((resolve, reject) => {
-      function processData(i, data) {
-          results[i] = data
-          index++
-          if (index === promises.length) {
-              resolve(results)
-          }
-      }
-      promises.forEach((promise, i) => {
-          promise.then(data => {
-              processData(i, data)
-          }, reject)
-      })
-  })
-}
-
 /**
- * 解析then返回值与新Promise对象
- * @param {Object} promise 新的Promise对象
- * @param {*} data 上一个then的返回值
- * @param {Function} resolve promise的resolve
- * @param {Function} reject promise的reject
+ * 解析then中onFulfilled/onRejected返回值与该then的Promise对象
+ * @param {Object} promise 该then的Promise对象
+ * @param {*} data 上一个onFulfilled/onRejected返回值
+ * @param {Function} fulfilled promise的resolve
+ * @param {Function} rejected promise的reject
  */
-function resolvePromise(promise, data, resolve, reject) {
+function resolvePromise(promise, data, fulfilled, rejected) {
   if (promise === data) {
-    reject(new TypeError('Promise发生循环引用'));
+    rejected(new TypeError('loop in existing promise object!'))
   }
-
   if (data instanceof CustomPromise) {
     try {
-        data.then.call(
-          data,
-          res => {
-            // 递归调用，传入res若是Promise对象，继续循环
-            resolvePromise(promise, res, resolve, reject);
-          },
-          err => {
-            reject(err);
-          },
-        );
-    } catch (e) {
-      reject(e);
+      // 返回了promise，执行并传入回调
+      data.then.call(data, res => resolvePromise(promise, res, fulfilled, rejected), err => rejected(err))
+    } catch (err) {
+      rejected(err)
     }
-  } else {
-    resolve(data);
-  }
+  } else fulfilled(data)
+}
+
+CustomPromise.prototype.catch = function(reject) {
+  return this.then(null, reject)
 }
 
 module.exports = CustomPromise

@@ -9,7 +9,13 @@ function express() {
   app.listen = function (...args) {
     http.createServer((req, res) => {
       var i = 0
-      function next() {
+      function next(err) {
+        if (err) {
+          // 对error做处理
+          res.write(err)
+          res.end()
+          return
+        }
         var task = funcs[i++]
         if (!task) return
         // next必须被调用才能加载下一个中间件

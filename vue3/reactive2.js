@@ -7,7 +7,7 @@ function reactive(obj) {
   return new Proxy(obj, {
     get(target, key) {
       // TODO做一层缓存，如果已经代理过则直接返回
-      // 使用到了Reflect
+      // 使用到了Reflect，作用：命令式编程转函数式编程
       const res = Reflect.get(target, key)
       // 进行依赖收集
       track(target, key)

@@ -21,7 +21,8 @@
 
 ### 响应式革新: vue2 vs vue3
 * vue2使用Objec.defineProperty遍历对象所有key，通过deps/watcher建立依赖关系，非常消耗性能，会影响初始化速度。
-* vue2对于数组要做特殊处理，修改数据时不能使用索引方式
+* 为了优化性能，不会对数组的每个元素都监听，由于defineProperty的局限性，改变数组长度及对象属性增删无法触发setter。
+
 ```js
 const arrayProto = Object.create(Array.prototype)
 ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'].forEach(method => {
