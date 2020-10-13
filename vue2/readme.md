@@ -2,6 +2,9 @@
 
 - [v-if与v-for哪个优先级高](#v-if与v-for哪个优先级高)
 - [key的作用](#key的作用)
+- [响应式原理](#响应式原理)
+  - [getter](#getter)
+  - [setter](#setter)
 - [route与router的区别？](#route与router的区别)
   - [route](#route)
   - [router](#router)
@@ -47,6 +50,17 @@
 多个相同类型节点在默认diff算法下会F-D一个个更新属性，最后插入一个原有元素E
 加入key后Diff算法可以识别该节点，找到正确位置直接插入
 同标签名元素的过渡切换(transition)也会用到key属性，否则无法触发
+
+## 响应式原理
+_init->initState->initData
+取出data代理到vm，并执行observe(data)
+将dep实例化对象赋值到__ob__
+### getter
+在getter调用时会触发dep.depend->Dep.target.addDep(this)->dep.addSub(this)
+将该dep推进watcher实例的deps数组，在作为响应式变量属性的dep的subs数组添加了当前watcher实例
+### setter
+在setter调用时调用dep.notify，对在该dep的subs中的watcher触发update函数。
+调用queueWatcher函数，通过nextTick分别执行watcher的getter函数（对于渲染watcher就是vm._update(vm._render()))，再执行回调函数。
 
 ## route与router的区别？
 ### route
@@ -326,7 +340,24 @@ const store = new Vuex.Store({
   actions,
   modules
 })
+
+// 在Vuex.Store的构造函数中有：
+// 重点方法 ，重置VM
+resetStoreVM(this, state)
+
+function resetStoreVM (store, state, hot) {
+  // 省略无关代码
+  Vue.config.silent = true
+  store._vm = new Vue({
+    data: {
+      $$state: state
+    },
+    computed
+  })
+}
 ```
+将传入的state作为一个隐藏Vue组件的data，commit操作就是改变data值，setter中lazy watcher的dirty被设置为true，下次访问将获取到最新值
+
 
 ## VueRouter中history模式和hash模式的异同
 

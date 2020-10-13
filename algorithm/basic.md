@@ -15,6 +15,7 @@
   - [二叉树的深度优先遍历](#二叉树的深度优先遍历)
   - [爬楼梯](#爬楼梯)
   - [变态爬楼梯](#变态爬楼梯)
+  - [丑数](#丑数)
 
 <!-- /TOC -->
 ## 基础
@@ -281,7 +282,7 @@ var climbStairs = function(n) {
 };
 // 循环，可加快速度
 function climbStairs(n) {
-  var n1 = 1, n2 = 1, sum;
+  var n1 = 1, n2 = 2, sum;
   for (let i = 2; i < n; i++) {
     sum = n1 + n2
     n1 = n2
@@ -312,4 +313,37 @@ var crazyClimbStairs = function(n) {
 };
 console.log(crazyClimbStairs(10));
 console.log(cache);
+```
+
+### 丑数
+我们把只包含质因子 2、3 和 5 的数称作丑数（Ugly Number）。求按从小到大的顺序的第 n 个丑数。
+示例:
+输入: n = 10
+输出: 12
+解释: 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 是前 10 个丑数。
+说明:  
+1 是丑数。
+n 不超过1690。
+```js
+  /**
+   * @param {number} n
+   * @return {number}
+   */
+  var nthUglyNumber = function(n) {
+    // 创建个数为n的数组
+    let arr = new Array(n).fill(0)
+    arr[0] = 1
+    // 定义三个指针，找出大小关系
+    let p1 = 0, p2 = 0, p3 = 0
+    for (let i = 1; i < n; i++) {
+      // 丑数一定是前面某个丑数*2/*3/*5的结果
+      // 取出上一个数
+      let last = arr[i - 1]
+      while (last >= arr[p1] * 2) p1++
+      while (last >= arr[p2] * 3) p2++
+      while (last >= arr[p3] * 5) p3++
+      arr[i] = Math.min(arr[p1] * 2, arr[p2] * 3, arr[p3] * 5)
+    }
+    return arr[n - 1]
+  };
 ```

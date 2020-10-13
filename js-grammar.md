@@ -10,6 +10,10 @@
 - [常见的设计模式](#常见的设计模式)
 - [原型与原型链](#原型与原型链)
 - [继承的六种方法](#继承的六种方法)
+- [生成器/迭代器实现](#生成器迭代器实现)
+  - [生成器](#生成器)
+  - [迭代器](#迭代器)
+  - [Generator实现fibonacci数列](#generator实现fibonacci数列)
 - [async/await 的实现](#asyncawait-的实现)
   - [Generator(生成器)](#generator生成器)
   - [next方法可以带一个参数，该参数就会被当作上一个yield表达式的返回值](#next方法可以带一个参数该参数就会被当作上一个yield表达式的返回值)
@@ -38,6 +42,7 @@
 - [NodeJS优缺点](#nodejs优缺点)
 - [event loop，Nodejs与浏览器区别](#event-loopnodejs与浏览器区别)
   - [宏任务/微任务](#宏任务微任务)
+- [requestAnimationFrame](#requestanimationframe)
 - [垃圾回收机制](#垃圾回收机制)
   - [WeakMap](#weakmap)
 - [NodeJS多核HTTP应用](#nodejs多核http应用)
@@ -46,6 +51,7 @@
 - [proxy与object.defineproperty](#proxy与objectdefineproperty)
 - [call/apply/bind](#callapplybind)
 - [js对象的深度克隆](#js对象的深度克隆)
+  - [call函数的实现](#call函数的实现)
 
 <!-- /TOC -->
 
@@ -152,12 +158,59 @@ console.log( oT2.skills ); //php,javascript
 console.log( oT2.showUserName() ); //ghostwu
 ```
 
+## 生成器/迭代器实现
+
+### 生成器
+它允许你定义一个包含自有迭代算法的函数， 同时它可以自动维护自己的状态。 生成器函数使用function*语法编写。 最初调用时，生成器函数不执行任何代码，而是返回一种称为Generator的迭代器。 通过调用生成器的下一个方法消耗值时，Generator函数将执行，直到遇到yield关键字。
+
+### 迭代器
+
+* 迭代器协议定义了一种标准的方式来产生一个有限或无限序列的值
+* 迭代器对象有一个next函数，返回一个对象{done, value}
+* done: 如果迭代器已经经过了整个被迭代的序列时为true，否则为false
+* value: done为false时返回值，true时可忽略
+```js
+function createIterator(items) {
+  var i = 0
+  return {
+    next() {
+      var done = (i >= items.length)
+      var value = !done ? items[i++] : undefined
+      return {
+        done,
+        value
+      }
+    }
+  }
+}
+```
+
+### Generator实现fibonacci数列
+```js
+function* fibonacci() {
+  let index = 0
+  let val1 = 0
+  let val2 = 1
+  while (true) {
+    index++
+    let current = val1 + val2
+    val1 = val2
+    val2 = current
+    let reset = yield current
+    if (reset) {
+      val1 = 0
+      val2 = 1
+    }
+  }
+}
+```
+
 ## async/await 的实现
 
 ### Generator(生成器)
 ```js
 function* Generator() {
-  yield 'step 1';
+  yield 'step 1'; // 出产(作物); 产生(收益、效益等); 
   yield 'step 2';
   return 'step 3';
 }
@@ -537,9 +590,12 @@ setTimeOut
 */
 ```
 
-
 **在node11版本中，node下的event loop已经与浏览器趋于相同**
 
+## requestAnimationFrame
+* 由系统决定回调函数的执行时机。60Hz的刷新频率，那么每次刷新的间隔中会执行一次回调函数，不会引起丢帧，不会卡顿。
+* 优势：在息屏与visibilitychange等状态暂停调用，减少cpu调用。对间隔进行基于帧率的节流。
+* setTimeout作为宏任务，在当前执行栈执行完才调用，实际时间总是比设定时间晚，其间隔不一定与屏幕刷新事件相同，会引起丢帧。
 ## 垃圾回收机制
 语言引擎有一张引用表，保存了所有资源的引用次数，如果次数为0，表示这个值不在用到，可以释放。
 ```js
@@ -646,6 +702,21 @@ function deepCopy(obj) {
   });
 }
 ```
+
+### call函数的实现
+```js
+Function.prototype.$call = function(ctx, ...args) {
+  // 直接这样来改变上下文！！！我醉了
+  target.fn = this
+  target.fn(...arg)
+  delete target.fn
+}
+function getInfo(age) {
+  return `my name is ${this.name || ''}, i'm ${age} years old`
+}
+getInfo.call({name: 'younger'}, 27)
+```
+
 3. 遍历
 ```js
 function deepClone(obj) {

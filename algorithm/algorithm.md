@@ -4,6 +4,9 @@
   - [特征](#特征)
 - [拓扑排序](#拓扑排序)
   - [课程表](#课程表)
+  - [路径总和2](#路径总和2)
+  - [合并区间](#合并区间)
+  - [全排列](#全排列)
 - [二分法](#二分法)
   - [二分查找](#二分查找)
   - [将html字符串转化为类AST](#将html字符串转化为类ast)
@@ -37,7 +40,7 @@
 
 **思路**
 
-* 示例 ：n = 6，先决条件表：[[3, 0], [3, 1], [4, 1], [4, 2], [5, 3, [5, 4]]
+* 示例 ：n = 6，先决条件表：[[3, 0], [3, 1], [4, 1], [4, 2], [5, 3], [5, 4]]
 * 0, 1, 2 没有先修课，可以直接选。其余的，都要先修2门课
 * 我们用`有向图`描述这种依赖关系(做事的先后关系)
 * 把这样一个 有向无环图 变成 线性的排序 就叫 拓扑排序
@@ -60,7 +63,7 @@
  * @return {boolean}
  */
 var canFinish = function(numCourses, prerequisites) {
-  // 需要一个记录所有课入度的数组inDegree，每节课所依赖的课形成的二维数组graph
+  // 需要一个记录所有课入度的数组inDegree，每节课出度对应课课形成的二维数组graph
   const inDegree = new Array(numCourses).fill(0);
   let graph = [];
   // 开始将 有向无环图 变成 线性的排序
@@ -93,6 +96,121 @@ var canFinish = function(numCourses, prerequisites) {
   }
   return count === numCourses;
 };
+canFinish(6, [[3, 0], [3, 1], [4, 1], [4, 2], [5, 3], [5, 4]]) // true
+```
+
+### 路径总和2
+给定一个二叉树和一个目标和，找到所有从根节点到叶子节点路径总和等于给定目标和的路径。
+```js
+/**
+ * Definition for a binary tree node.
+ * function TreeNode(val) {
+ *     this.val = val;
+ *     this.left = this.right = null;
+ * }
+ */
+/**
+ * @param {TreeNode} root
+ * @param {number} sum
+ * @return {number[][]}
+ */
+var pathSum = function(root, sum) {
+  // 深度优先遍历
+  const resArr = []
+  const getSumNum = (subRoot, arr = []) => {
+    if (!subRoot) return
+    arr.push(subRoot.val)
+    if (subRoot.left) getSumNum(subRoot.left, arr.slice())
+    if (subRoot.right) getSumNum(subRoot.right, arr.slice())
+    if (!subRoot.left && !subRoot.right && sum === arr.reduce((prev, cur) => prev + cur)) resArr.push(arr)
+  }
+  getSumNum(root)
+  return resArr
+};
+```
+
+### 合并区间
+给出一个区间的集合，合并所有重叠区间
+示例 1:
+
+输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出: [[1,6],[8,10],[15,18]]
+解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+示例 2:
+
+输入: intervals = [[1,4],[4,5]]
+输出: [[1,5]]
+解释: 区间 [1,4] 和 [4,5] 可被视为重叠区间。
+
+```js
+/**
+ * @param {number[][]} intervals
+ * @return {number[][]}
+ */
+var merge = function(intervals) {
+  intervals.sort((a, b) => {
+    if (a[0] !== b[0]) return a[0] - b[0]
+    else return a[1] - b[1]
+  })
+  let res = [], start, end
+  for (let i = 0; i < intervals.length; i++) {
+    if (typeof start === 'undefined') {
+      start = intervals[i][0]
+      end = intervals[i][1]
+    } else if (intervals[i][0] <= end) {
+      end = Math.max(intervals[i][1], end)
+    } else {
+      // push上个区间
+      res.push([start, end])
+      start = intervals[i][0]
+      end = intervals[i][1]
+    }
+  }
+  // 最后一个区间
+  if (typeof start !== 'undefined') res.push([start, end])
+  return res
+};
+
+var arr = [[1,3],[2,6],[8,10],[15,18]]
+console.log(merge(arr))
+```
+
+### 全排列
+给定一个可包含重复数字的序列，返回所有不重复的全排列
+输入: [1,1,2]
+输出:
+[
+  [1,1,2],
+  [1,2,1],
+  [2,1,1]
+]
+
+```js
+/**
+ * @param {number[]} nums
+ * @return {number[][]}
+ */
+var permuteUnique = function(nums) {
+  // 回溯法
+  const res = []
+  const length = nums.length
+  const unique = (arr = []) => {
+    if (arr.length === length) res.push(arr.slice())
+    for (let i = 0; i < nums.length; i++) {
+      if (i > 0 && nums[i - 1] === nums[i]) continue // 在前一个数的循环中已经做过处理
+      arr.push(nums[i])
+      nums.splice(i, 1)
+      unique(arr)
+      nums.splice(i, 0, arr.pop())
+    }
+  }
+  // 首先做一下排序
+  nums.sort((a, b) => a - b)
+  unique()
+  return res
+};
+
+permuteUnique([1, 2, 3])
 ```
 
 ## 二分法
@@ -322,9 +440,51 @@ var addTwoNumbers = function(l1, l2) {
  * @return {number}
  */
 var lengthOfLongestSubstring = function(s) {
-  s.match(/(.)(.*\\1)/g)
+  // 记录每个字符是否出现过，自动过滤重复字符
+  const occ = new Set()
+  const length = s.length
+  // 指针位置，最长子串数
+  let rk = 0, ans = 0
+  // i为左边界
+  for(let i = 0; i < length; i++) {
+    // 左边界移动时删除相应元素
+    if (i !== 0) {
+      occ.delete(s[i - 1])
+    }
+    // 右边界右移，知道遇到边界或与occ中重复的字符
+    while (rk < length && !occ.has(s.charAt(rk))) {
+      occ.add(s[rk])
+      rk++
+    }
+    ans = Math.max(ans, rk - i)
+  }
+  return ans
 };
 ```
+
+### 最长公共前缀
+```js
+var longestCommonPrefix = function(strs) {
+  if (!strs || !strs.length) return ''
+  let prefix = strs[0]
+  for (let i = 1; i < strs.length; i++) {
+    for(let j = 0; j < strs[i].length; j++) {
+      if (prefix[j] !== strs[i][j]) {
+        prefix = prefix.slice(0, j)
+        break
+      }
+    }
+    // 截取最小长度！
+    if (strs[i].length < prefix.length) prefix = prefix.slice(0, strs[i].length)
+  }
+  return prefix
+};
+```
+
+### 字符串的排列
+给定两个字符串 s1 和 s2，写一个函数来判断 s2 是否包含 s1 的排列。
+
+换句话说，第一个字符串的排列之一是第二个字符串的子串。
 
 ## 内存策略
 
