@@ -74,6 +74,7 @@
   - [兼容性](#兼容性-1)
   - [使用](#使用)
 - [RTMP](#rtmp)
+- [webrtc](#webrtc)
 
 <!-- /TOC -->
 
@@ -749,3 +750,11 @@ self.addEventListener('fetch', event => {
 1. 在TCP/IP协议之上的应用层协议，有多个变种(rtmpx)默认为使用1935端口的明文协议。
 2. RTMP的数据单元被称为消息(Message)。传输数据时，消息被拆成消息块。
 3. 
+
+## webrtc
+web层主要接口：
+* MediaStream: 采集音视频
+* RTCPeerConnection: 传输音视频
+* RTCDataChannel: 传输自定义数据
+
+webrtc使用的udp，但不是普通的udp，在udp上做了很多优化

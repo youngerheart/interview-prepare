@@ -446,12 +446,12 @@ var lengthOfLongestSubstring = function(s) {
   // 指针位置，最长子串数
   let rk = 0, ans = 0
   // i为左边界
-  for(let i = 0; i < length; i++) {
+  for (let i = 0; i < length; i++) {
     // 左边界移动时删除相应元素
     if (i !== 0) {
       occ.delete(s[i - 1])
     }
-    // 右边界右移，知道遇到边界或与occ中重复的字符
+    // 右边界右移，只到遇到边界或与occ中重复的字符
     while (rk < length && !occ.has(s.charAt(rk))) {
       occ.add(s[rk])
       rk++
