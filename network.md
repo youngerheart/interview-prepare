@@ -361,10 +361,17 @@ http://www.c.com:8002/content/delete/:id
 ```
 则当用户访问攻击者的网站时，会向www.c.com发起一个删除帖子请求，若用户再到www.c.com刷新，会发现该帖子已经被删除。
 
+假如博客园还是有个加关注的接口，不过已经限制了只获取POST请求的数据。这个时候就做一个第三方的页面，但里面包含form提交代码，然后通过QQ、邮箱等社交工具传播，诱惑用户去打开，那打开过博客园的用户就中招了。嵌入frame中更可以增加隐蔽性。
+
 **防范措施**
 * 验证码：强制用户与应用进行交互，但并不能所有操作都加上验证码。
 * Referer验证：Referer得到的是完整的URL，可以验证请求源是否合法。
 * token验证：在请求中以参数/http头字段的形式添加一个随机token（由后端经过验证而产生）如果某个请求不包含该token或不正确则拒绝请求。token需要被保存/有有效期/刷新机制等
+  1. 用户访问某个表单页面。
+  2. 服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。
+  3. 在页面表单附带上Token参数。
+  4. 用户提交请求后， 服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。
+这个Token的值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token时应注意Token的保密性，尽量把敏感操作由GET改为POST，以form或AJAX形式提交，避免Token泄露。
 
 ## sql注入方法
 假设服务器未开启`magic_quote_gpc`
@@ -710,7 +717,7 @@ this.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache => {
       console.log(cache);
       // 添加要缓存的资源列表
-      this.skipWaiting();
+      this.skipWaiting(); // 强制刷新
       return cache.addAll(urlsToCache);
     })
   );

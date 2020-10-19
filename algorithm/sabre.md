@@ -11,6 +11,7 @@
   - [动态规划与贪婪算法](#动态规划与贪婪算法)
   - [位运算](#位运算)
 - [高质量](#高质量)
+  - [解决面试题的思路](#解决面试题的思路)
 
 <!-- /TOC -->
 
@@ -389,8 +390,101 @@ console.log(isNumber('123.45e+6'))
 ```
 
 * 输入一个整数数组，实现一个函数来调整数字的顺序，使得奇数在前，偶数在后
-两个指针指向开头与末尾，开头为偶末尾为奇则交换位置
+使用两个指针从两端向中间，满足交换条件就进行交换
+```js
+function recorder(data, func) {
+  if (!data || data.length === 0) return
+  let start = 0
+  let end = data.length - 1
+  let temp
+  while (start < end) {
+    // 如果前端是奇数后端是偶数则略过
+    while (start < end && !func(data[start])) start++
+    while (start < end && func(data[end])) end--
+    // 做交换
+    if (start < end) {
+      temp = data[start]
+      data[start] = data[end]
+      data[end] = temp
+    }
+  }
+}
+
+// 判断为偶数
+function isEven(n) {
+  return (n & 1) === 0
+}
+```
+
+* 链表中倒数第k个节点
+输入一个链表，输出该链表中倒数第k个节点（要求时间复杂度为O(n)）
+定义两个指针，第一个从链表的头指针开始遍历车向前走k-1步后，第二个也开始遍历。当第一个走到头第二个刚好走到位置
+同时需要处理健壮性：1. 空指针 2.链表节点总数小于k 3. 输入k为0
+
+* 链表中环的入口节点
+如果一个链表中包含环，如何找到环的入口节点？
+同样设置两个指针，一个一次走一步，另一个一次走两步，走的快的指针追上了走的慢的，链表包含环。
+在被追赶上的节点出发，再次回到该节点，即可得知环中节点数
+再重新从头开始，第一个指针先走环节点数，两个同时开始前进，直到两个节点相同，即找到了入口。
+
+* 翻转链表
+定义一个函数，输入一个链表的头节点，翻转该链表并输出翻转后的头节点
+定义三个指针，指向当前节点，前一个与后一个节点，倒置指针指向。
+注意：头指针为null/整个链表只有一个节点
+
+* 合并两个排序的链表
+输入两个递增的链表，合并使新链表中的节点仍然是递增排序。
+两者从头到尾比较，较小者插入新链表，递归进行
+```js
+  mergeList(head1, head2) {
+    if (!head1) return head2
+    else if (!head2) return head1
+    let mergedHead = null
+    if (head1.value < head2.value) {
+      mergedHead = head1
+      mergedHead.next = mergeList(head1->next, head2)
+    } else {
+      mergedHead = head2
+      mergedHead.next = mergeList(head1, head2->next)
+    }
+    return mergedHead
+  }
+```
+
+* 数的子结构
+输入两颗二叉树A和B，判断B是不是A的子结构。
 
 ```js
+// 遍历root1，当其节点与root2值相同，进入检查阶段
+function hasSubTree(root1, root2) {
+  let result = false
+  if (root1 && root2) {
+    if (root1.value === root2.value) result = checkSubTree(root1, root2)
+    if (!result) result = hasSubTree(root1.left, root2)
+    if (!result) result = hasSubTree(root1.right, root2)
+  }
+  return result
+}
 
+// 按b遍历，比较每个节点值
+function checkSubTree(root1, root2) {
+  if (!root2) return true
+  if (!root1) return false
+  if (root1.value !== root2.value) return false
+  return checkSubTree(root1.left, root2.left) && checkSubTree(root1.right, root2.right)
+}
 ```
+
+## 解决面试题的思路
+* 二叉树的镜像
+完成一个函数，输入一颗二叉树，该函数输出它的镜像。
+遍历二叉树，交换左右节点
+```js
+mirrorTree(node) {
+  if (!node) return
+  if ()
+}
+```
+* 对称的二叉树
+实现一个函数，用来判断一颗二叉树是不是对称的，如果一颗二叉树和它的镜像一样，那么它是对称的。
+针对前序遍历定义一种对称的遍历算法：根右左，当该遍历序列（包括空指针后）与前序相等，则该树对称

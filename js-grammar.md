@@ -711,10 +711,14 @@ function deepCopy(obj) {
 ### call函数的实现
 ```js
 Function.prototype.$call = function(ctx, ...args) {
-  // 直接这样来改变上下文！！！我醉了
-  target.fn = this
-  target.fn(...arg)
-  delete target.fn
+  let that = this
+  return function() {
+    // 直接这样来改变上下文！！！我醉了
+    if (typeof ctx === 'undefined') ctx = that || window || global
+    ctx.fn = this
+    ctx.fn(...args)
+    delete ctx.fn
+  }
 }
 function getInfo(age) {
   return `my name is ${this.name || ''}, i'm ${age} years old`
