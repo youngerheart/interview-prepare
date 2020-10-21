@@ -26,6 +26,7 @@
   - [null表示没有该对象](#null表示没有该对象)
   - [undefined表示缺少值](#undefined表示缺少值)
 - [for...in 与 for...of](#forin-与-forof)
+- [es6数组方法](#es6数组方法)
 - [JS隐式类型转换](#js隐式类型转换)
 - [js位运算](#js位运算)
 - [new操作符具体做了什么](#new操作符具体做了什么)
@@ -53,6 +54,7 @@
 - [call/apply/bind](#callapplybind)
 - [js对象的深度克隆](#js对象的深度克隆)
   - [call函数的实现](#call函数的实现)
+- [commonjs 与 esm 的区别](#commonjs-与-esm-的区别)
 
 <!-- /TOC -->
 
@@ -418,6 +420,12 @@ function 的「创建」「初始化」和「赋值」都被提升了。
 * for...in总是得到对象的key或数组，字符串的下标
 * for...of与forEach一样，直接得到值，但是**不能在对象使用**，可以遍历set,map,只要部署了Iterator的数据结构都可以使用 for ··· of ··· 完成遍历操作。
 
+## es6数组方法
+* reduce(缩小): 传参为函数(prev, current) => {} prev第一次为首个元素，之后为返回值，current从第二个元素开始传入
+* flat(水平，平坦): 打平多维数组`[[[[1]]]].flat(Infinity)`
+* reverse(颠倒): 反转数组
+* forEach/map/filter/some/every
+
 ## JS隐式类型转换
 如果运算符两边数据不统一就无法运算，编译器会将两边转换为一致的数据类型再计算
 * 转为string: `+`字符串连接符
@@ -470,6 +478,7 @@ Map是一中键值对的结构，类似于:
 `[[key1, value1], [key2, value2], [key3, value3]]`
 初始化Map可以传入上述的二维数组，或直接初始化空Map。
 实例化map有以下方法
+**map可以用复杂数据类型做key**
 ```js
 map.set(key, value)
 map.has(key) // true/false
@@ -746,3 +755,111 @@ function deepClone(obj) {
   return objClone;
 }
 ```
+
+## commonjs 与 esm 的区别
+* exports 对象是模块内外的唯一关联， commonjs 输出的内容，就是 exports 对象的属性（拷贝），模块运行结束，属性就确定了
+```js
+// a.js
+let a = 1;
+let b = { num: 1 }
+setTimeout(() => {
+    a = 2;
+    b = { num: 2 };
+}, 200);
+module.exports = {
+    a,
+    b,
+};
+
+// main.js
+// node main.js
+let {a, b} = require('./a');
+console.log(a);  // 1
+console.log(b);  // { num: 1 }
+setTimeout(() => {
+    console.log(a);  // 1
+    console.log(b);  // { num: 1 }
+}, 500)
+```
+* 模块内部引用的变化，会反应在外部，这是 esm 的规范。
+```js
+
+// a.mjs
+let a = 1;
+let b = { num: 1 }
+setTimeout(() => {
+  a = 2;
+  b = { num: 2 };
+}, 200);
+export {
+  a,
+  b,
+};
+ 
+// main.mjs
+// node --experimental-modules main.mjs
+import {a, b} from './a';
+console.log(a);  // 1
+console.log(b);  // { num: 1 }
+setTimeout(() => {
+    console.log(a);  // 2
+    console.log(b);  // { num: 2 }
+}, 500);
+```
+* esm 的 import read-only 特性，该属性是只读的，不能赋值，在script[type]="module"/webpack做tree-shaking时有用（静态分析）
+* esm 存在 export/import 提升，在编译阶段完成
+* 对于循环依赖，CommonJS的做法是，只输出已经执行的部分，还未执行的部分不会输出
+
+```js
+// a.js
+exports.done = false;
+let b = require('./b');
+console.log('a.js: b.done = %j', b.done);  // true
+exports.done = true;
+console.log('a.js执行完毕');
+ 
+// b.js
+exports.done = false;
+let a = require('./a');
+console.log('b.js: a.done = %j', a.done);  // false
+exports.done = true;
+console.log('b.js执行完毕');
+ 
+// main.js
+let a = require('./a');
+let b = require('./b');
+console.log('main.js: a.done = %j, b.done = %j', a.done, b.done);  // true true
+ 
+// 输出结果
+// node main.js
+b.js: a.done = false
+b.js执行完毕
+a.js: b.done = true
+a.js执行完毕
+main.js: a.done = true, b.done = true
+```
+* ES6根本不会关心是否发生了"循环加载"，只是生成一个指向被加载模块的引用，需要开发者自己保证，真正取值的时候能够取到值
+```js
+// a.mjs
+export let a_done = false;
+import { b_done } from './b';
+console.log('a.js: b.done = %j', b_done);
+console.log('a.js执行完毕');
+ 
+// b.mjs
+import { a_done } from './a';
+console.log('b.js: a.done = %j', a_done);
+export let b_done = true;
+console.log('b.js执行完毕');
+ 
+// main.mjs
+import { a_done } from './a';
+import { b_done } from './b';
+console.log('main.js: a.done = %j, b.done = %j', a_done, b_done);
+ 
+// 输出结果
+// node --experimental-modules main.mjs
+ReferenceError: a_done is not defined
+// a.mjs 中的export a_done被提升到顶部，执行到import './b'时，执行权限移交到 b.mjs，此时a_done只是一个指定导出的接口，但是未定义，所以出现引用报错。
+```
+* babel 是使用commonjs模拟实现esm，提升的变量为export对象的属性，为undifined，无法出现is not defined报错。

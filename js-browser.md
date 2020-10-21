@@ -36,6 +36,8 @@
   - [环境搭建](#环境搭建)
   - [编译运行](#编译运行)
   - [asm.js](#asmjs)
+- [实现文件上传进度与断点续传](#实现文件上传进度与断点续传)
+- [jsbridge](#jsbridge)
 
 <!-- /TOC -->
 
@@ -398,3 +400,34 @@ fetch('helloworld.wasm') // 加载（需要在服务器环境）
 * 变量一律都是静态类型，并且取消垃圾回收机制。除了这两点，它与 JavaScript 并无差异，也就是说，asm.js 是 JavaScript 的一个严格的子集，只能使用后者的一部分语法。
 * 一旦 JavaScript 引擎发现运行的是 asm.js，就知道这是经过优化的代码，可以跳过语法分析这一步，直接转成汇编语言。另外，浏览器还会调用 WebGL 通过 GPU 执行 asm.js，即 asm.js 的执行引擎与普通的 JavaScript 脚本不同。这些都是 asm.js 运行较快的原因。据称，asm.js 在浏览器里的运行速度，大约是原生代码的50%左右。通过`Emscripten`将C代码转为asm.js。
 * asm.js转出文本，人类可读，兼容性高，WebAssembly转出二进制字节码，运行更快，体积更小。
+
+## 实现文件上传进度与断点续传
+```js
+let xhr = new XMLHttpRequest()
+xhr.open('post', url, true);
+// 下载在xhr对象，上传在xhr.upload
+xhr.upload.onprogress = (event) => {
+  console.log(event.total, event.loaded, event.lengthComputable) // 总字节量/已上传量/文件长度是否可得出，不可得出total为0
+  // 同时根据已上传量变化可以计算出下载速度
+}
+xhr.onload = uploadComplete; //请求完成
+xhr.onerror =  uploadFailed; //请求失败
+```
+
+```js
+// 针对Blob对象可以调用slice方法分片，上传时需要携带文件md5值/当前分片序号/分片总数/文件名等信息
+let fd = new FormData();
+fd.append("sliced", newParaMeters.sliced);
+fd.append("filename", newParaMeters.filename);
+fd.append("file", newParaMeters.file);
+fd.append("md5_value", newParaMeters.md5_value);
+fd.append("total_size", newParaMeters.total_size);
+fd.append("slice_count", newParaMeters.slice_count);
+fd.append("slice_index", newParaMeters.slice_index);
+fd.append("slice_size", newParaMeters.slice_size);
+// xhr.setRequestHeader('Content-Type', 'multipart/form-data')
+xhr.send(fd)
+```
+
+## jsbridge
+* 通过URI Schema请求

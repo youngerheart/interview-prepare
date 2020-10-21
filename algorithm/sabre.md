@@ -284,6 +284,37 @@ deleteNode(head, target) {
 }
 ```
 
+* 类比：删除链表的第i个节点
+```js
+deleteNode(head, i) {
+  let index = 0
+  let target = head
+  while (index < i) {
+    if (target.next) target = target.next
+    else return
+    index++
+  }
+  // 要删除的不是为节点，正常执行删除操作，直接将target赋值为next，再删除next
+  if (target.next !== null) {
+    let next = target.next
+    target.value = next.value
+    target.next = next.next
+    next = null
+  } else if (head === target) {
+    // target无next且为头节点
+    head = null
+  } else {
+    //target为尾节点
+    let focus = head
+    while (focus.next !== target) {
+      focus = focus.next
+    }
+    delete focus.next
+  }
+
+}
+```
+
 * 删除链表中重复的节点
 一个排序的列表中删除重复节点，如1-2-3-3-4-4-5删除后为1-2-5。从头遍历链表，如果当前节点与下一个相同，那么他们是重复的节点，可以被删除。
 
@@ -478,13 +509,17 @@ function checkSubTree(root1, root2) {
 ## 解决面试题的思路
 * 二叉树的镜像
 完成一个函数，输入一颗二叉树，该函数输出它的镜像。
-遍历二叉树，交换左右节点
+遍历二叉树，只要有子节点就交换左右节点
 ```js
 mirrorTree(node) {
-  if (!node) return
-  if ()
+  if (!node || (!node->left && !node->right)) return
+  let temp = node->left
+  node->left = node->right
+  node->right = temp
+  if (node->left) mirrorTree(node->left)
+  if (node->right) mirrorTree(node->right)
 }
 ```
 * 对称的二叉树
 实现一个函数，用来判断一颗二叉树是不是对称的，如果一颗二叉树和它的镜像一样，那么它是对称的。
-针对前序遍历定义一种对称的遍历算法：根右左，当该遍历序列（包括空指针后）与前序相等，则该树对称
+针对前序遍历定义一种对称的遍历算法：根右左，当该遍历序列（包括空指针后）与前序相等，则该树对称。
