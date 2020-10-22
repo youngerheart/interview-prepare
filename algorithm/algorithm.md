@@ -199,6 +199,7 @@ var permuteUnique = function(nums) {
     for (let i = 0; i < nums.length; i++) {
       if (i > 0 && nums[i - 1] === nums[i]) continue // 在前一个数的循环中已经做过处理
       arr.push(nums[i])
+      // 回溯处理
       nums.splice(i, 1)
       unique(arr)
       nums.splice(i, 0, arr.pop())
@@ -512,6 +513,7 @@ var LRUCache = function(capacity) {
 LRUCache.prototype.get = function(key) {
   if (this.cache.has(key)) {
     let value = this.cache.get(key);
+    // 更新顺序
     this.cache.delete(key);
     this.cache.set(key, value);
     return value;

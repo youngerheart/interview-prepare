@@ -690,11 +690,11 @@ try {
 
 ## proxy与object.defineproperty
 
-object.defineproperty
+object.defineproperty(obj, key, descriptor)
 * 不能监听数组的变化，对于数组方法无法触发set
 * 必须深层遍历对象的每个属性
 
-proxy
+proxy(obj, descriptor)
 针对对象：针对整个对象，不是某个属性，所有key都可以走进set
 支持数组：不需要对方法重载
 嵌套：get中递归调用Proxy并返回
