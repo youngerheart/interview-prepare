@@ -1,6 +1,7 @@
 <!-- TOC -->
 
 - [Webpack的作用](#webpack的作用)
+  - [loader与plugin的区别](#loader与plugin的区别)
 - [Webpack优化](#webpack优化)
   - [加快构建速度](#加快构建速度)
   - [优化打包文件体积（webpack-bundle-analyzer）](#优化打包文件体积webpack-bundle-analyzer)
@@ -15,6 +16,64 @@
 <!-- /TOC -->
 
 ## Webpack的作用
+
+### loader与plugin的区别
+* loader负责对于模块源码的转换
+描述了如何处理非javascript模块，并在build中引入这些依赖，如ts转js，image转data Url
+* 常用loader
+样式：css-loader；文件: url-loader；编译: babel-loader；校验：eslint-loader
+* 写一个简单的loader：将文本类文件转为字符串到js文件
+```js
+// this.cacheable/this.value是loader的api，可以将结果标记为可缓存和把值传给下一代
+module.exports = function(content) {
+  this.cacheable && this.cacheable()
+  this.value = content
+  return 'module.exports = ' + JSON.stringify(content)
+}
+```
+
+* plugin用于解决loader无法实现的其他事，通过钩子可以涉及整个构建流程，可以做一些在构建范围内的事情。
+* 常用plugin
+webpack4内置`terser-webpack-plugin`，用于压缩和混淆代码
+`html-webpack-plugin`根据模板生成html代码，并自动引用css和js文件。
+`webpack.DefinePlugin`编译时设置全局变量
+`HotModuleReplacementPlugin`添加后在entry中增加入口，或直接在命令中输入--hot --inline
+`compression-webpack-plugin`采用gzip压缩js和css
+* 写一个webpack插件
+  1. 编写一个js命名函数
+  2. 在其原型上定义apply方法
+  3. 指定挂载的事件钩子
+  4. 处理特定数据
+  5. 完成功能后调用webpack提供的回调
+  
+```js
+function FileListPlugin(options) {
+  console.log(options)
+}
+FileListPlugin.prototype.apply = function(compiler) {
+  compiler.plugin('emit', function(compilation, callback) {
+    var fileList = 'In this build:\n'
+    for (var filename in compilation.assets) {
+      filelist += `-${filename}\n`
+    }
+    compilation.assets['filelist.md'] = {
+      source() {
+        return filelist
+      },
+      size() {
+        return filelist.length
+      }
+    }
+    // 执行完毕
+    callbabck()
+  })
+}
+```
+
+* webpack插件钩子
+`compile`编译(可以得到compilation对象)`emit`生成文件
+* compiler对象代表配置完备的webpack环境，只在Webpack启动时构建一次，由webpack组合配置项构建生成
+* compilation 对象代表了一次单一的版本构建和生成资源。当运行 webpack 开发环境中间件时，每当检测到一个文件变化，一次新的编译将被创建，从而生成一组新的编译资源。
 
 ## Webpack优化
 

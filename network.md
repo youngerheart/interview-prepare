@@ -68,8 +68,12 @@
   - [首部压缩算法](#首部压缩算法)
   - [http2.0下的前端优化](#http20下的前端优化)
   - [https](#https)
-- [webp](#webp)
+- [gzip](#gzip)
   - [原理](#原理)
+  - [启用](#启用)
+  - [刷新cdn缓存](#刷新cdn缓存)
+- [webp](#webp)
+  - [原理](#原理-1)
   - [兼容性](#兼容性)
   - [应用](#应用)
 - [PWA(Progressive Web Apps)渐进式增强web应用](#pwaprogressive-web-apps渐进式增强web应用)
@@ -686,6 +690,27 @@ header字段的表示法分两种
 6. 服务器接收到客户端发来的密文之后，会用自己的私钥对其进行非对称解密，解密之后的明文就是客户端密钥，然后用客户端密钥对数据进行对称加密，这样数据就变成了密文。
 7. 然后服务器将加密后的密文发送给客户端。
 8. 客户端收到服务器发送来的密文，用客户端密钥对其进行对称解密，得到服务器发送的数据。这样HTTPS中的第二个HTTP请求结束，整个HTTPS传输完成。
+
+## gzip
+### 原理
+请求头中有Accept-Encoding标识对压缩的支持，响应头返回content-encoding: gzip
+### 启用
+* node
+```js
+var compression = require('compression')
+var app = express()
+app.use(compression())
+```
+* nginx
+```js
+// http{} 或server{}或location{}中
+gzip on
+gzip_types text/plain text/javascript test/css
+gzip_http_version 1.1
+gzip_disabble msie6
+```
+### 刷新cdn缓存
+使用`vary: Accept-Encoding, User-Agent`这样代理就会根据请求的Accept-Encoding和User-Agent的值来缓存不同的web服务器响应版本，便于下次请求直接作出响应。
 
 ## webp
 ### 原理
