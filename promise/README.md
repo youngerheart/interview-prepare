@@ -35,7 +35,6 @@
 * 如果promise1的onFulfilled或onFulfilled中抛出异常，promise2必须捕获此错误。
 * 如果当前then没有定义onFulfilled或onFulfilled且状态不为pending，下一个then一定会收到一样的value/reason
 
-
 ## CustomPromise
 
 ### 构造函数
@@ -47,7 +46,7 @@
 ### then函数
 * 首先检查传入的onFulFilled和onRejected，如果未传值则分别赋值`data => data` 与`error => { throw error }`
 * 返回一个新的CustomPromise p，传入值为fulFill与reject。这就是链式调用的对象
-* 在定义函数中，如果当前promise仍在pending，向onFulFilledFuncs push一个函数：try中通过onFulFilled(this.value)获取其返回值data，再调用reslovePromise(p, data, fulFill, reject)，如果catch到错误直接调用reject(err)。向onRejectFuncs push 类似函数。
+* 在定义函数中，如果当前promise仍在pending，向onFulFilledFuncs push一个函数：try中通过onFulFilled(this.value)获取其返回值data，再调用resolvePromise(p, data, fulFill, reject)，如果catch到错误直接调用reject(err)。向onRejectFuncs push 类似函数。
 * 如果当前promise已经fulfilled及rejected，直接执行try/catch语句。
 
 ### resolvePromise
