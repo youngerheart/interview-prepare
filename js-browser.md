@@ -27,6 +27,7 @@
 - [Viewport](#viewport)
 - [移动端点击延迟](#移动端点击延迟)
   - [解决方案](#解决方案)
+- [防抖与节流](#防抖与节流)
 - [各种前端异常的捕获方式](#各种前端异常的捕获方式)
   - [构思后端处理的方法？](#构思后端处理的方法)
 - [获取dom对象的样式值](#获取dom对象的样式值)
@@ -260,8 +261,13 @@ event.preventDefault();
 ```
 
 ## Viewport
-手机浏览器是把页面放在一个虚拟的“窗口”（viewport）中，与桌面端页面做区分
+手机浏览器是把页面放在一个虚拟的“窗口”（viewport）中，与桌面端页面做区分,让网页开发者通过其大小,动态的设置其网页内容中控件元素的大小,从而使得在浏览器上实现和web网页中相同的效果(比例缩小)。
+* width:控制viewport的大小，一般情况下指定为device-width(单位为缩放为100%的CSS像素),也可以指定一个固定的值例如600.
+* user-scalable:用户是否可以手动缩放。
 
+```js
+<meta id="viewport" name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1; user-scalable=no;">
+```
 
 ## 移动端点击延迟
 由于`双击缩放方案`移动端对于点击事件(click回调)会有300ms的延迟
@@ -277,6 +283,11 @@ FastClick.attach(document.body);
 ```
 在检测到touchend事件时，立即触发一个模拟click，并将300ms后真正的click阻止掉，。
 * 指针事件（pointer event）
+
+## 防抖与节流
+防抖（Debounce）和节流（Throttle）都是用来控制某个函数在一定时间内执行多少次的技巧，两者相似而又不同。
+* 防抖：在函数被触发n秒后再执行，如果在n秒内又有函数执行，则重新计算。
+* 节流：允许一个函数在 X 毫秒内只执行一次。
 
 ## 各种前端异常的捕获方式
 * js执行错误
